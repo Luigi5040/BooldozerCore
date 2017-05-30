@@ -39,6 +39,7 @@
     <Reference Include="GameFormatReader">
       <HintPath>lib\GameFormatReader.dll</HintPath>
     </Reference>
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -55,6 +56,10 @@
     <Compile Include="src\Collision\Models\Collision_Compiled.cs" />
     <Compile Include="src\Collision\Models\Collision_Json.cs" />
     <Compile Include="src\Bin\bin.cs" />
+    <Compile Include="src\Bin\Materials\BinaryTextureImage.cs" />
+    <Compile Include="src\Bin\Materials\ImageDataFormat.cs" />
+    <Compile Include="src\Bin\Materials\TGA.cs" />
+    <Compile Include="src\Bin\Materials\Color.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Util\" />
@@ -62,6 +67,7 @@
     <Folder Include="src\Collision\" />
     <Folder Include="src\Collision\Models\" />
     <Folder Include="src\Bin\" />
+    <Folder Include="src\Bin\Materials\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
