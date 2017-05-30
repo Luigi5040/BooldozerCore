@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using OpenTK;
 using GameFormatReader.Common;
 
-namespace Booldozer
+namespace Booldozer.Jmp
 {
 	public class jmp
 	{

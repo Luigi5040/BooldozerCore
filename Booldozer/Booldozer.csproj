@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
     <ProjectGuid>{26DDED3A-5A9B-415B-8031-934C97EF0D01}</ProjectGuid>
-    <OutputType>EXE</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>Booldozer</RootNamespace>
     <AssemblyName>Booldozer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -39,14 +39,29 @@
     <Reference Include="EndianBinaryStreams">
       <HintPath>lib/EndianBinaryStreams.dll</HintPath>
     </Reference>
-        <Reference Include="GameFormatReader">
-      <HintPath>lib/GameFormatReader.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
-    <Compile Include="jmp.cs" />
-    <Compile Include="bin.cs" />
+    <Compile Include="src\Util\BoundingBox.cs" />
+    <Compile Include="src\Bin\bin.cs" />
+    <Compile Include="src\Jmp\jmp.cs" />
+    <Compile Include="src\Collision\Collision_Debug.cs" />
+    <Compile Include="src\Collision\Collision_Input.cs" />
+    <Compile Include="src\Collision\Collision_Output.cs" />
+    <Compile Include="src\Collision\Collision_Rendering.cs" />
+    <Compile Include="src\Collision\GridCell.cs" />
+    <Compile Include="src\Collision\Triangle.cs" />
+    <Compile Include="src\Util\Util.cs" />
+    <Compile Include="src\Collision\Models\Collision_AssImp.cs" />
+    <Compile Include="src\Collision\Models\Collision_Compiled.cs" />
+    <Compile Include="src\Collision\Models\Collision_Json.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="src\Util\" />
+    <Folder Include="src\Bin\" />
+    <Folder Include="src\Jmp\" />
+    <Folder Include="src\Collision\" />
+    <Folder Include="src\Collision\Models\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
