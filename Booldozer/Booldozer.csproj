@@ -36,8 +36,8 @@
     <Reference Include="OpenTK">
       <HintPath>lib/OpenTK.dll</HintPath>
     </Reference>
-    <Reference Include="EndianBinaryStreams">
-      <HintPath>lib/EndianBinaryStreams.dll</HintPath>
+    <Reference Include="GameFormatReader">
+      <HintPath>lib\GameFormatReader.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
