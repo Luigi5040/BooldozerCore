@@ -1,0 +1,9 @@
+#herpa derpa
+bin/
+lib/
+obj/
+
+#just incase we have game files lying around
+*.obj
+*.bin
+*.arc
