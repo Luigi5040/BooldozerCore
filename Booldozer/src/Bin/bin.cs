@@ -10,8 +10,7 @@ using GameFormatReader.Common;
 
     TODO: 
      - Clean this up and plan/write out writing things
-     - Fix a few issues with ?triangle conversion?
-     - Fix issue with reading the right amount of primitives with files that base their primitive count on list size
+     - Textures and Materials
 
  */
 
@@ -19,6 +18,18 @@ namespace Booldozer.Bin
 {
     public class BinModel
     {
+
+            public enum GXPrimitiveType
+            {
+                Points = 0xB8,
+                Lines = 0xA8,
+                LineStrip = 0xB0,
+                Triangles = 0x90,
+                TriangleStrip = 0x98,
+                TriangleFan = 0xA0,
+                Quads = 0x80,
+            }
+
         public class GraphObject 
         {
             public short parentIndex;
@@ -157,10 +168,12 @@ namespace Booldozer.Bin
                 stream.Skip(8);
 
                 var f = 0;
+                bool knownPrimitive = true; //Hax?
                 stream.BaseStream.Seek(offset + offsets[11], 0);
-                while(f < faceCount && stream.BaseStream.Position < (offset + offsets[11]) + (listSize<<5))
+                while(f < faceCount && knownPrimitive)
                 {
                     var p = new Primitive(stream, offsets, nbt, uvCount, attribs);
+                    knownPrimitive = (p.type == 0 ? false : true); 
                     f += p.count-2;
                     primitives.Add(p);
                 }
@@ -209,6 +222,77 @@ namespace Booldozer.Bin
         public List<Vector3> Verticies = new List<Vector3>();
         private uint[] offsets = new uint[21];
 
+        string mName;
+
+        public void writeOBJ(string filename = null){
+            if (filename == null)
+            {
+                filename = mName + ".obj";
+            }
+            StringWriter writer = new StringWriter();
+            writer.WriteLine($"# Model \"{mName}\" dumped from bin by Booldozer v0.Ferns");
+            writer.WriteLine();
+            foreach(Vector3 v in Verticies){
+                writer.WriteLine($"v {v.X} {v.Y} {v.Z}");
+            }
+            writer.WriteLine();
+            var curParts = 0;
+            foreach (var mesh in Meshes)
+            {
+                writer.WriteLine($"g {mName}.{curParts}");
+                curParts += 1;
+                foreach (var part in mesh.MeshParts)
+                {
+                    foreach (var primitive in part.batch.primitives)
+                    {
+                        var verts = primitive.verts;
+                        switch ((GXPrimitiveType)primitive.type)
+                        {
+                            case GXPrimitiveType.Triangles:
+                            writer.WriteLine($"f {verts[0].posIndex+1} {verts[1].posIndex+1} {verts[2].posIndex+1}");
+                            break;
+
+                            case GXPrimitiveType.TriangleStrip:
+                            for (int v = 2; v < verts.Count; v++)
+                            {
+                                bool even = v % 2 != 0;
+                                var tri = new int[3];
+                                tri[0] = verts[v-2].posIndex;
+                                tri[1] = even ? verts[v].posIndex : verts[v-1].posIndex;
+                                tri[2] = even ? verts[v-1].posIndex : verts[v].posIndex;
+                                if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
+                                {
+                                    writer.WriteLine($"f {tri[0]+1} {tri[1]+1} {tri[2]+1}");
+                                }
+                            }
+                            break;
+
+                            case GXPrimitiveType.TriangleFan:
+                            for (int v = 1; v < verts.Count; v++)
+                            {
+                                var tri = new int[3];
+                                tri[0] = verts[v].posIndex+1;
+                                tri[1] = verts[v+1].posIndex+1;
+                                tri[2] = verts[0].posIndex+1;
+
+                                if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
+                                {
+                                    writer.WriteLine($"f {tri[0]} {tri[1]} {tri[2]}");
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            using(FileStream s = new FileStream(filename, FileMode.Create, FileAccess.Write))
+            {
+                EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
+                w.Write(writer.ToString().ToCharArray());
+            }
+        }
+
         public BinModel(string path)
         {
             using(FileStream fs = new FileStream(path, FileMode.Open))
@@ -220,7 +304,7 @@ namespace Booldozer.Bin
                 foreach(var c in Path.GetInvalidFileNameChars()){
                     p = p.Replace(c, ' ').Trim();
                 }
-                TextWriter o = new StreamWriter(p + ".obj");//stream.ReadChars(11));
+                mName = p;
                 for (int i = 0; i < 21; i++)
                 {
                     offsets[i] = stream.ReadUInt32();
@@ -233,6 +317,7 @@ namespace Booldozer.Bin
                     if (offsets[i] > 0)
                     {
                         vertCount = (offsets[i] - offsets[2]) / 6;
+                        break;
                     }                    
                 }
                 
@@ -241,61 +326,7 @@ namespace Booldozer.Bin
                 {
                     Verticies.Add(new Vector3(stream.ReadInt16(), stream.ReadInt16(), stream.ReadInt16()));
                 }
-                for (int i = 0; i < Verticies.Count; i++)
-                {
-                    o.WriteLine("v {0} {1} {2}\n", Verticies[i].X, Verticies[i].Y, Verticies[i].Z);
-                }
-                var cGourp = 0;
-                foreach (var obj in Meshes)
-                {
-                    o.WriteLine("g GraphObject{0}", cGourp);
-                    cGourp += 1;
-                    foreach (var part in obj.MeshParts)
-                    {
-                        foreach (var primitive in part.batch.primitives)
-                        {
-                            var face = "f {0} {1} {2}";
-                            var tri = new int[3];
-                            switch(primitive.type){
-                                case 0x90:
-                                o.WriteLine(face, primitive.verts[0].posIndex+1, primitive.verts[1].posIndex+1, primitive.verts[2].posIndex+1);
-                                break;
-
-                                case 0x98:
-                                for (int v = 2; v < primitive.verts.Count; v++)
-                                {
-                                    bool even = v % 2 != 0;
-                                    tri[0] = primitive.verts[v-2].posIndex;
-                                    tri[1] = even ? primitive.verts[v].posIndex : primitive.verts[v-1].posIndex;
-                                    tri[2] = even ? primitive.verts[v-1].posIndex : primitive.verts[v].posIndex;
-                                    if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-                                    {
-                                        o.WriteLine(face, tri[0]+1, tri[1]+1, tri[2]+1);
-                                    }
-                                }
-                                break;
-
-                                case 0xA0:
-                                for (int v = 1; v < primitive.verts.Count; v++)
-                                {
-                                    tri[0] = primitive.verts[v].posIndex;
-                                    tri[1] = primitive.verts[v].posIndex;
-                                    tri[2] = primitive.verts[v].posIndex;
-                                    if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-                                    {
-                                        o.WriteLine(face, tri[0]+1, tri[1]+1, tri[2]+1);
-                                    }
-                                }
-                                break;
-
-                                case 0x80:
-                                o.WriteLine(face, primitive.verts[0].posIndex+1, primitive.verts[1].posIndex+1, primitive.verts[2].posIndex+1);
-                                o.WriteLine(face, primitive.verts[1].posIndex+1, primitive.verts[2].posIndex+1, primitive.verts[3].posIndex+1);
-                                break;
-                            }
-                        }
-                    }
-                }
+                writeOBJ();
             }
         }
     }
