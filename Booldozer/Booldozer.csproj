@@ -43,7 +43,6 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="src\Util\BoundingBox.cs" />
-    <Compile Include="src\Bin\bin.cs" />
     <Compile Include="src\Jmp\jmp.cs" />
     <Compile Include="src\Collision\Collision_Debug.cs" />
     <Compile Include="src\Collision\Collision_Input.cs" />
@@ -55,13 +54,14 @@
     <Compile Include="src\Collision\Models\Collision_AssImp.cs" />
     <Compile Include="src\Collision\Models\Collision_Compiled.cs" />
     <Compile Include="src\Collision\Models\Collision_Json.cs" />
+    <Compile Include="src\Bin\bin.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Util\" />
-    <Folder Include="src\Bin\" />
     <Folder Include="src\Jmp\" />
     <Folder Include="src\Collision\" />
     <Folder Include="src\Collision\Models\" />
+    <Folder Include="src\Bin\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
