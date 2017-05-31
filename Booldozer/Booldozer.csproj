@@ -55,19 +55,24 @@
     <Compile Include="src\Collision\Models\Collision_AssImp.cs" />
     <Compile Include="src\Collision\Models\Collision_Compiled.cs" />
     <Compile Include="src\Collision\Models\Collision_Json.cs" />
-    <Compile Include="src\Bin\bin.cs" />
-    <Compile Include="src\Bin\Materials\BinaryTextureImage.cs" />
-    <Compile Include="src\Bin\Materials\ImageDataFormat.cs" />
-    <Compile Include="src\Bin\Materials\TGA.cs" />
-    <Compile Include="src\Bin\Materials\Color.cs" />
+    <Compile Include="src\Models\Materials\BinaryTextureImage.cs" />
+    <Compile Include="src\Models\Materials\Color.cs" />
+    <Compile Include="src\Models\Materials\ImageDataFormat.cs" />
+    <Compile Include="src\Models\Materials\TGA.cs" />
+    <Compile Include="src\Models\Bin\Bin.cs" />
+    <Compile Include="src\Models\Bin\Geometry.cs" />
+    <Compile Include="src\Models\Bin\Materials.cs" />
+    <Compile Include="src\Models\GXPrimitives.cs" />
+    <Compile Include="src\Models\Bin\Scenegraph.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Util\" />
     <Folder Include="src\Jmp\" />
     <Folder Include="src\Collision\" />
     <Folder Include="src\Collision\Models\" />
-    <Folder Include="src\Bin\" />
-    <Folder Include="src\Bin\Materials\" />
+    <Folder Include="src\Models\" />
+    <Folder Include="src\Models\Materials\" />
+    <Folder Include="src\Models\Bin\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

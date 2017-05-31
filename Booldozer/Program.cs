@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using Booldozer.Bin;
+using Booldozer.Models.Bin;
 
 namespace Booldozer
 {
