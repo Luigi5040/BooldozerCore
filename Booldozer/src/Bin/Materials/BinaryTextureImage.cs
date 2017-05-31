@@ -158,6 +158,19 @@ namespace Booldozer.Materials
             m_rgbaImageData = BinaryTextureImage.EncodeData(bmp, bmp.Width, bmp.Height, format);
         }
 
+        public BinaryTextureImage(EndianBinaryReader stream, long headerStart, long sectionOffset){
+            stream.BaseStream.Position = headerStart;
+            Width = stream.ReadUInt16();
+            Height = stream.ReadUInt16();
+            Format = (TextureFormats)stream.ReadByte();
+            stream.SkipByte();
+            stream.Skip(2);
+            uint imageDataOffset = stream.ReadUInt32();
+            stream.BaseStream.Position = imageDataOffset + sectionOffset;
+            m_rgbaImageData = DecodeData(stream, Width, Height, Format);
+            
+        }
+
         // headerStart seems to be chunkStart + 0x20 and I don't know why.
         public void Load(EndianBinaryReader stream, long headerStart, int imageIndex = 0)
         {
@@ -204,8 +217,8 @@ namespace Booldozer.Materials
                 bmp.UnlockBits(bmpData);
 
                 // Bitmaps will throw an exception if the output folder doesn't exist so...
-                Directory.CreateDirectory(Path.GetDirectoryName(outputFile));
-                bmp.Save(outputFile);
+                Directory.CreateDirectory("textures");
+                bmp.Save($"textures/{outputFile}");
             }
         }
 

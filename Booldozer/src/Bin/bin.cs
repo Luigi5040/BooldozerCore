@@ -4,13 +4,15 @@ using System.Text;
 using System.IO;
 using OpenTK;
 using GameFormatReader.Common;
+using Booldozer.Materials;
+using System.Drawing;
 //using Assimp;
 
 /*
 
     TODO: 
-     - Clean this up and plan/write out writing things
-     - Textures and Materials
+     - Clen up. A lot.
+     - Add wrapping to textures and obj exporter
 
  */
 
@@ -19,16 +21,67 @@ namespace Booldozer.Bin
     public class BinModel
     {
 
-            public enum GXPrimitiveType
+        public enum GXPrimitiveType
+        {
+            Points = 0xB8,
+            Lines = 0xA8,
+            LineStrip = 0xB0,
+            Triangles = 0x90,
+            TriangleStrip = 0x98,
+            TriangleFan = 0xA0,
+            Quads = 0x80,
+        }
+
+        public class Shader
+        {
+            uint tint;
+            short[] materialIndex = new short[8];
+            short[] unkIndex = new short[8];
+            
+            public Material[] materials = new Material[8];
+            public Shader(EndianBinaryReader stream, uint[] offsets)
             {
-                Points = 0xB8,
-                Lines = 0xA8,
-                LineStrip = 0xB0,
-                Triangles = 0x90,
-                TriangleStrip = 0x98,
-                TriangleFan = 0xA0,
-                Quads = 0x80,
+                stream.Skip(3);
+                tint = stream.ReadUInt32();
+                stream.SkipByte();
+                for (int i = 0; i < 8; i++)
+                {
+                    materialIndex[i] = stream.ReadInt16();
+                    //Console.WriteLine($"Material Index: {materialIndex[i]}");
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    unkIndex[i] = stream.ReadInt16();
+                }
+                for (int i = 0; i < 8; i++)
+                {
+                    if (materialIndex[i] >= 0)
+                    {
+                        stream.BaseStream.Seek(offsets[1] + (0x14*materialIndex[i]), 0);
+                        materials[i] = new Material(stream, offsets[0]);   
+                    }
+                }
             }
+        }
+
+        public class Material 
+        {
+            public short textureIndex;
+            short wrapU;
+            short wrapV;
+            //12 bytes of padding, remember this
+            public BinaryTextureImage texture;
+            public Material(EndianBinaryReader stream, uint texOffset){
+                //Console.WriteLine("Reading Material at 0x{0:X}", stream.BaseStream.Position);
+                textureIndex = stream.ReadInt16();
+                stream.SkipInt16();
+                wrapU = stream.ReadByte();
+                wrapV = stream.ReadByte();
+                stream.SkipInt16();
+                stream.Skip(12);
+                texture = new BinaryTextureImage(stream, texOffset+(0xC*textureIndex), texOffset);
+            }
+        }
 
         public class GraphObject 
         {
@@ -186,14 +239,19 @@ namespace Booldozer.Bin
             public short shaderIndex;
             public short batchIndex;
             public Batch batch;
+            public Shader shader;
 
             public GraphObjectPart(EndianBinaryReader stream, uint[] offsets)
             {
                 shaderIndex = stream.ReadInt16();
                 batchIndex = stream.ReadInt16();
                 var last = stream.BaseStream.Position;
+                
                 stream.BaseStream.Seek(offsets[11] + (0x18*batchIndex), 0);
                 batch = new Batch(stream, offsets);
+                
+                stream.BaseStream.Seek(offsets[10] + (0x28*shaderIndex), 0);
+                shader = new Shader(stream, offsets);
                 stream.BaseStream.Seek(last, 0);
             }
         }
@@ -237,12 +295,22 @@ namespace Booldozer.Bin
             }
             writer.WriteLine();
             var curParts = 0;
+            var texCount = 0;
             foreach (var mesh in Meshes)
             {
                 writer.WriteLine($"g {mName}.{curParts}");
-                curParts += 1;
+                curParts++;
                 foreach (var part in mesh.MeshParts)
                 {
+                    foreach (var mat in part.shader.materials)
+                    {
+                        if (mat != null)
+                        {
+                            var cTex = mat.texture;
+                            cTex.SaveImageToDisk($"{texCount}.png", cTex.GetData(), cTex.Width, cTex.Height);
+                            texCount++;
+                        }
+                    }
                     foreach (var primitive in part.batch.primitives)
                     {
                         var verts = primitive.verts;
