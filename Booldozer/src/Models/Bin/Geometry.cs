@@ -61,12 +61,10 @@ namespace Booldozer.Models.Bin
 		{
 			type = stream.ReadByte();
 			count = stream.ReadInt16();
-			//Console.WriteLine("Reading primitive with {0} verts starting at 0x{1:X}", count, stream.BaseStream.Position);
 			for (int i = 0; i < count; i++)
 			{
 				verts.Add(new GXVertex(stream, uvCount, nbt, attribs));
 			}
-			//Console.WriteLine("Finished Reading Primitve");
 		}
 
 	}

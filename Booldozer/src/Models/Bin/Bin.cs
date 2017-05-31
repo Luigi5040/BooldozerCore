@@ -11,7 +11,7 @@ using System.Drawing;
 /*
 
     TODO: 
-     - Clen up. A lot.
+     - Clean up. A lot.
      - Add wrapping to textures and obj exporter
 
  */
