@@ -19,7 +19,7 @@ using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Bin
 {
-	public class BinModel
+	public class BinModel : Mesh
 	{
 		public List<GraphObject> Meshes;
 		public List<Vector3> Vertices;
@@ -225,6 +225,16 @@ namespace Booldozer.Models.Bin
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
 				w.Write(writer.ToString().ToCharArray());
 			}
+		}
+
+		public override void Load(EndianBinaryReader reader)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override void Render()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

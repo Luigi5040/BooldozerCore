@@ -9,7 +9,7 @@ using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Mdl
 {
-    public class MdlModel
+    public class MdlModel : Mesh
     {
         ushort[] counts; //20;
         long[] offsets; //18
@@ -73,7 +73,18 @@ namespace Booldozer.Models.Mdl
 				w.Write(writer.ToString().ToCharArray());
 			}
         }
-        public MdlModel()
+
+		public override void Load(EndianBinaryReader reader)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override void Render()
+		{
+			throw new NotImplementedException();
+		}
+
+		public MdlModel()
         {
             counts = new ushort[20];
             offsets = new long[18];
