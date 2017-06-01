@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.IO;
 using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using GameFormatReader.Common;
 using Booldozer.Materials;
 using System.Drawing;
@@ -30,6 +31,12 @@ namespace Booldozer.Models.Bin
 		private uint[] m_Offsets = new uint[21];
 		private string m_Name;
 
+		private uint m_PositionCount;
+		private uint m_NormalCount;
+		private uint m_UV0Count;
+		private uint m_Color0Count;
+		private uint m_Color1Count;
+
 		public BinModel()
 		{
 			Meshes = new List<GraphObject>();
@@ -44,12 +51,12 @@ namespace Booldozer.Models.Bin
 			Meshes = new List<GraphObject>();
 			Vertices = new List<Vector3>();
 			Normals = new List<Vector3>();
-			UVs = new List<Vector2>[8];
-			Colors = new List<Color32>[2];
+			UVs = new List<Vector2>[8] { new List<Vector2>(), new List<Vector2>(), new List<Vector2>(), new List<Vector2>(), new List<Vector2>(), new List<Vector2>(), new List<Vector2>(), new List<Vector2>() };
+			Colors = new List<Color32>[2] { new List<Color32>(), new List<Color32>() };
 
 			using (FileStream fs = new FileStream(path, FileMode.Open))
 			{
-				EndianBinaryReader stream = new EndianBinaryReader(fs, Encoding.GetEncoding("shift-jis"), Endian.Big);
+				EndianBinaryReader stream = new EndianBinaryReader(fs, Endian.Big);
 				stream.Skip(1);
 
 				//hacky but for now its ok
@@ -66,164 +73,262 @@ namespace Booldozer.Models.Bin
 					m_Offsets[i] = stream.ReadUInt32();
 				}
 
-				getGraphObjects(stream, 0);
+				GetGraphObjects(stream, 0);
 
-				uint vertCount = 0;
-				for (int i = 3; i < 21; i++)
-				{
-					if (m_Offsets[i] > 0)
-					{
-						vertCount = (m_Offsets[i] - m_Offsets[2]) / 6;
-						break;
-					}
-				}
+				CalculateAttributeCounts(stream);
+				LoadAttributeData(stream);
 
 				stream.BaseStream.Seek(m_Offsets[2], 0);
-				for (int i = 0; i < vertCount; i++)
+				for (int i = 0; i < m_PositionCount; i++)
 				{
 					Vertices.Add(new Vector3(stream.ReadInt16(), stream.ReadInt16(), stream.ReadInt16()));
 				}
 
-				WriteObjTest();
+				if (m_Offsets[3] != 0)
+				{
+
+				}
+			}
+
+			WriteObj(@"D:\SZS Tools\Luigi's Mansion\BinTest2\test.obj");
+		}
+
+		private void CalculateAttributeCounts(EndianBinaryReader reader)
+		{
+			// Position
+			for (int i = 3; i < 21; i++)
+			{
+				if (m_Offsets[i] > 0)
+				{
+					m_PositionCount = (m_Offsets[i] - m_Offsets[2]) / 6;
+					break;
+				}
+			}
+
+			// Normals/Binormals/Tangents
+			if (m_Offsets[3] != 0)
+			{
+				for (int i = 4; i < 21; i++)
+				{
+					if (m_Offsets[i] > 0)
+					{
+						m_NormalCount = (m_Offsets[i] - m_Offsets[3]) / 12;
+						break;
+					}
+				}
+			}
+
+			// Color0
+			if (m_Offsets[4] != 0)
+			{
+				for (int i = 5; i < 21; i++)
+				{
+					if (m_Offsets[i] > 0)
+					{
+						m_Color0Count = (m_Offsets[i] - m_Offsets[4]) / 4;
+						break;
+					}
+				}
+			}
+
+			// Color1
+			if (m_Offsets[5] != 0)
+			{
+				for (int i = 6; i < 21; i++)
+				{
+					if (m_Offsets[i] > 0)
+					{
+						m_Color1Count = (m_Offsets[i] - m_Offsets[5]) / 4;
+						break;
+					}
+				}
+			}
+
+			// UV0
+			if (m_Offsets[6] != 0)
+			{
+				for (int i = 7; i < 21; i++)
+				{
+					if (m_Offsets[i] > 0)
+					{
+						m_UV0Count = (m_Offsets[i] - m_Offsets[6]) / 8;
+						break;
+					}
+				}
 			}
 		}
 
-		private void getGraphObjects(EndianBinaryReader stream, int index)
+		private void LoadAttributeData(EndianBinaryReader reader)
+		{
+			// Positions
+			if (m_PositionCount != 0)
+			{
+				reader.BaseStream.Seek(m_Offsets[2], SeekOrigin.Begin);
+
+				for (int i = 0; i < m_PositionCount; i++)
+					Vertices.Add(new Vector3(reader.ReadInt16(), reader.ReadInt16(), reader.ReadInt16()));
+			}
+
+			// Normals
+			if (m_NormalCount != 0)
+			{
+				reader.BaseStream.Seek(m_Offsets[3], SeekOrigin.Begin);
+
+				for (int i = 0; i < m_NormalCount; i++)
+					Normals.Add(new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle()));
+			}
+			// Color0
+			if (m_Color0Count != 0)
+			{
+				reader.BaseStream.Seek(m_Offsets[4], SeekOrigin.Begin);
+
+				for (int i = 0; i < m_Color0Count; i++)
+					Colors[0].Add(new Color32() { R = reader.ReadByte(), G = reader.ReadByte(), B = reader.ReadByte(), A = reader.ReadByte() });
+			}
+			// Color1
+			if (m_Color1Count != 0)
+			{
+				reader.BaseStream.Seek(m_Offsets[5], SeekOrigin.Begin);
+
+				for (int i = 0; i < m_Color1Count; i++)
+					Colors[1].Add(new Color32() { R = reader.ReadByte(), G = reader.ReadByte(), B = reader.ReadByte(), A = reader.ReadByte() });
+			}
+			// UV0
+			if (m_UV0Count != 0)
+			{
+				reader.BaseStream.Seek(m_Offsets[6], SeekOrigin.Begin);
+
+				for (int i = 0; i < m_UV0Count; i++)
+					UVs[0].Add(new Vector2(reader.ReadSingle(), reader.ReadSingle()));
+			}
+		}
+
+		private void GetGraphObjects(EndianBinaryReader stream, int index)
 		{
 			stream.BaseStream.Seek(m_Offsets[12] + (0x8C * index), 0);
 			var obj = new GraphObject(stream);
 			stream.BaseStream.Seek(obj.partOffset + m_Offsets[12], 0);
+
 			for (int i = 0; i < obj.partCount; i++)
 			{
-				//Console.WriteLine("Reading Part {0} at offset 0x{1:X}", i, stream.BaseStream.Position);
 				obj.MeshParts.Add(new GraphObjectPart(stream, m_Offsets));
 			}
+
 			Meshes.Add(obj);
+
 			if (obj.childIndex >= 0)
 			{
-				getGraphObjects(stream, obj.childIndex);
+				GetGraphObjects(stream, obj.childIndex);
 			}
+
 			if (obj.nextIndex >= 0)
 			{
-				getGraphObjects(stream, obj.nextIndex);
+				GetGraphObjects(stream, obj.nextIndex);
 			}
 		}
 
-		/*
-		public void WriteOBJ(string filename = null)
+		public void WriteObj(string outFile)
 		{
-			if (filename == null)
+			string outDir = Path.GetDirectoryName(outFile);
+
+			StringWriter objWriter = new StringWriter(); // Writes the OBJ geometry
+			StringWriter mtlWriter = new StringWriter(); // Writes the texture maps to mtl
+
+			objWriter.WriteLine($"mtllib { m_Name }.mtl"); // Material library name reference
+
+			// Write vertices
+			for (int i = 0; i < Vertices.Count; i++)
+				objWriter.WriteLine($"v { Vertices[i].X } { Vertices[i].Y } { Vertices[i].Z }");
+
+			// Write UV0s, if present
+			if (UVs[0].Count != 0)
 			{
-				filename = m_Name + ".obj";
+				for (int i = 0; i < UVs[0].Count; i++)
+					objWriter.WriteLine($"vt { UVs[0][i].X } { UVs[0][i].Y }");
 			}
 
-			StringWriter writer = new StringWriter();
-			writer.WriteLine($"# Model \"{m_Name}\" dumped from bin by Booldozer v0.Ferns");
-			writer.WriteLine();
-
-			foreach (Vector3 v in Vertices)
+			// Write normals, if present
+			if (Normals.Count != 0)
 			{
-				writer.WriteLine($"v {v.X} {v.Y} {v.Z}");
+				for (int i = 0; i < Normals.Count; i++)
+					objWriter.WriteLine($"vn { Normals[i].X } { Normals[i].Y } { Normals[i].Z }");
 			}
 
-			writer.WriteLine();
+			objWriter.WriteLine();
 
-			var curParts = 0;
-			var texCount = 0;
-			foreach (var mesh in Meshes)
-			{
-				writer.WriteLine($"g {m_Name}.{curParts}");
-				curParts++;
-
-				foreach (var part in mesh.MeshParts)
-				{
-					foreach (var mat in part.shader.materials)
-					{
-						if (mat != null)
-						{
-							var cTex = mat.texture;
-							cTex.SaveImageToDisk($"{texCount}.png", cTex.GetData(), cTex.Width, cTex.Height);
-							texCount++;
-						}
-					}
-
-					foreach (var primitive in part.batch.primitives)
-					{
-						var verts = primitive.verts;
-						switch ((GXPrimitiveType)primitive.type)
-						{
-							case GXPrimitiveType.Triangles:
-								writer.WriteLine($"f {verts[0].posIndex + 1} {verts[1].posIndex + 1} {verts[2].posIndex + 1}");
-								break;
-
-							case GXPrimitiveType.TriangleStrip:
-								for (int v = 2; v < verts.Count; v++)
-								{
-									bool even = v % 2 != 0;
-									var tri = new int[3];
-									tri[0] = verts[v - 2].posIndex;
-									tri[1] = even ? verts[v].posIndex : verts[v - 1].posIndex;
-									tri[2] = even ? verts[v - 1].posIndex : verts[v].posIndex;
-									if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-									{
-										writer.WriteLine($"f {tri[0] + 1} {tri[1] + 1} {tri[2] + 1}");
-									}
-								}
-								break;
-
-							case GXPrimitiveType.TriangleFan:
-								for (int v = 1; v < verts.Count; v++)
-								{
-									var tri = new int[3];
-									tri[0] = verts[v].posIndex + 1;
-									tri[1] = verts[v + 1].posIndex + 1;
-									tri[2] = verts[0].posIndex + 1;
-
-									if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-									{
-										writer.WriteLine($"f {tri[0]} {tri[1]} {tri[2]}");
-									}
-								}
-								break;
-						}
-					}
-				}
-			}
-
-			using (FileStream s = new FileStream(filename, FileMode.Create, FileAccess.Write))
-			{
-				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
-				w.Write(writer.ToString().ToCharArray());
-			}
-		}*/
-
-		public void WriteObjTest()
-		{
-			StringWriter writer = new StringWriter();
-
-			if (Vertices.Count != 0)
-			{
-				for (int i = 0; i < Vertices.Count; i++)
-					writer.WriteLine($"v { Vertices[i].X } { Vertices[i].Y } { Vertices[i].Z }");
-			}
-
-			writer.WriteLine();
-
+			int texCount = 0;
+			int partCount = 0;
 			foreach (GraphObject obj in Meshes)
 			{
 				foreach (GraphObjectPart part in obj.MeshParts)
 				{
+					foreach (var mat in part.shader.materials)
+					{
+						// Output textures
+						if (mat != null)
+						{
+							var cTex = mat.texture;
+							cTex.SaveImageToDisk($"{ outDir }\\{ texCount }.png", cTex.GetData(), cTex.Width, cTex.Height);
+
+							mtlWriter.WriteLine($"newmtl { partCount }"); // New material for part
+							mtlWriter.WriteLine($"map_kd { texCount }.png"); // Set diffuse texture to the texture we just dumped
+
+							texCount++;
+						}
+					}
+
+					objWriter.WriteLine($"o { partCount }"); // New object for part for clarity
+					objWriter.WriteLine($"usemtl { partCount++ }"); // Material reference for part
+
 					for (int i = 0; i < part.batch.RawVertices.Count; i += 3)
 					{
-						writer.WriteLine($"f { part.batch.RawVertices[i].Indices[0] + 1 } { part.batch.RawVertices[i + 1].Indices[0] + 1 } { part.batch.RawVertices[i + 2].Indices[0] + 1 }");
+						string[] verts = new string[] { "", "", "" };
+
+						for (int j = 0; j < 3; j++)
+						{
+							string pos = "";
+							string uv = "";
+							string norm = "";
+
+							// Position index. Has the divider / at the end.
+							if (part.batch.ActiveAttributes.Contains(GXAttribute.Position))
+								pos = $"{ Convert.ToString(part.batch.RawVertices[i + j].Indices[part.batch.ActiveAttributes.IndexOf(GXAttribute.Position)] + 1) }/";
+
+							// UV index. Might be absent. Has no / dividers.
+							if (part.batch.ActiveAttributes.Contains(GXAttribute.Tex0))
+								uv = $"{ Convert.ToString(part.batch.RawVertices[i + j].Indices[part.batch.ActiveAttributes.IndexOf(GXAttribute.Tex0)] + 1) }";
+
+							// Normal index. Might be absent. Has / divider at the beginning.
+							if (part.batch.ActiveAttributes.Contains(GXAttribute.Normal))
+								norm = $"/{ Convert.ToString(part.batch.RawVertices[i + j].Indices[part.batch.ActiveAttributes.IndexOf(GXAttribute.Normal)] + 1) }";
+
+							// With this / divider setup, the possible combinations are:
+							// position
+							// position/uv
+							// position//normal
+							// position/uv/normal
+							// which is what we need
+
+							verts[j] = $"{pos}{uv}{norm}";
+						}
+
+						objWriter.WriteLine($"f { verts[0] } { verts[1] } { verts[2] }");
 					}
 				}
 			}
 
-			using (FileStream s = new FileStream(@"D:\SZS Tools\Luigi's Mansion\BinVertTest.obj", FileMode.Create, FileAccess.Write))
+			// Output OBJ
+			using (FileStream s = new FileStream($"{ outDir }\\{ m_Name }.obj", FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
-				w.Write(writer.ToString().ToCharArray());
+				w.Write(objWriter.ToString().ToCharArray());
+			}
+
+			// Output MTL
+			using (FileStream s = new FileStream($"{ outDir }\\{ m_Name }.mtl", FileMode.Create, FileAccess.Write))
+			{
+				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
+				w.Write(mtlWriter.ToString().ToCharArray());
 			}
 		}
 

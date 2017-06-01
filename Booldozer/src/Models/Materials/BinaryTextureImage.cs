@@ -217,8 +217,8 @@ namespace Booldozer.Materials
                 bmp.UnlockBits(bmpData);
 
                 // Bitmaps will throw an exception if the output folder doesn't exist so...
-                Directory.CreateDirectory("textures");
-                bmp.Save($"textures/{outputFile}");
+                //Directory.CreateDirectory("textures");
+				bmp.Save(outputFile);
             }
         }
 
