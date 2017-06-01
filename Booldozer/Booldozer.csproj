@@ -62,8 +62,13 @@
     <Compile Include="src\Models\Bin\Bin.cs" />
     <Compile Include="src\Models\Bin\Geometry.cs" />
     <Compile Include="src\Models\Bin\Materials.cs" />
-    <Compile Include="src\Models\GXPrimitives.cs" />
     <Compile Include="src\Models\Bin\Scenegraph.cs" />
+    <Compile Include="src\Models\Mdl\Geometry.cs" />
+    <Compile Include="src\Models\Mdl\Mdl.cs" />
+    <Compile Include="src\Models\GX\GXAttributes.cs" />
+    <Compile Include="src\Models\GX\GXPrimitives.cs" />
+    <Compile Include="src\Models\GX\GXVertex.cs" />
+    <Compile Include="src\Models\GX\GXBatch.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Util\" />
@@ -73,6 +78,7 @@
     <Folder Include="src\Models\" />
     <Folder Include="src\Models\Materials\" />
     <Folder Include="src\Models\Bin\" />
+    <Folder Include="src\Models\GX\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

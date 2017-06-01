@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using GameFormatReader.Common;
 using OpenTK;
+using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Bin
 {
@@ -53,7 +54,7 @@ namespace Booldozer.Models.Bin
 	{
 		public short shaderIndex;
 		public short batchIndex;
-		public Batch batch;
+		public GXBatch batch;
 		public Shader shader;
 
 		public GraphObjectPart(EndianBinaryReader stream, uint[] offsets)
@@ -63,7 +64,9 @@ namespace Booldozer.Models.Bin
 			var last = stream.BaseStream.Position;
 
 			stream.BaseStream.Seek(offsets[11] + (0x18 * batchIndex), 0);
-			batch = new Batch(stream, offsets);
+			//batch = null;
+			batch = new GXBatch();
+			batch.LoadBinBatch(stream, (int)offsets[11]);
 
 			stream.BaseStream.Seek(offsets[10] + (0x28 * shaderIndex), 0);
 			shader = new Shader(stream, offsets);

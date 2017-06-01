@@ -5,6 +5,7 @@ using System.IO;
 using OpenTK;
 using GameFormatReader.Common;
 using Booldozer.Materials;
+using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Mdl
 {

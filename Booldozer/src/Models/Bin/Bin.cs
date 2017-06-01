@@ -6,6 +6,7 @@ using OpenTK;
 using GameFormatReader.Common;
 using Booldozer.Materials;
 using System.Drawing;
+using Booldozer.Models.GX;
 //using Assimp;
 
 /*
@@ -83,7 +84,7 @@ namespace Booldozer.Models.Bin
 					Vertices.Add(new Vector3(stream.ReadInt16(), stream.ReadInt16(), stream.ReadInt16()));
 				}
 
-				WriteOBJ();
+				WriteObjTest();
 			}
 		}
 
@@ -108,6 +109,7 @@ namespace Booldozer.Models.Bin
 			}
 		}
 
+		/*
 		public void WriteOBJ(string filename = null)
 		{
 			if (filename == null)
@@ -189,6 +191,36 @@ namespace Booldozer.Models.Bin
 			}
 
 			using (FileStream s = new FileStream(filename, FileMode.Create, FileAccess.Write))
+			{
+				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
+				w.Write(writer.ToString().ToCharArray());
+			}
+		}*/
+
+		public void WriteObjTest()
+		{
+			StringWriter writer = new StringWriter();
+
+			if (Vertices.Count != 0)
+			{
+				for (int i = 0; i < Vertices.Count; i++)
+					writer.WriteLine($"v { Vertices[i].X } { Vertices[i].Y } { Vertices[i].Z }");
+			}
+
+			writer.WriteLine();
+
+			foreach (GraphObject obj in Meshes)
+			{
+				foreach (GraphObjectPart part in obj.MeshParts)
+				{
+					for (int i = 0; i < part.batch.RawVertices.Count; i += 3)
+					{
+						writer.WriteLine($"f { part.batch.RawVertices[i].Indices[0] + 1 } { part.batch.RawVertices[i + 1].Indices[0] + 1 } { part.batch.RawVertices[i + 2].Indices[0] + 1 }");
+					}
+				}
+			}
+
+			using (FileStream s = new FileStream(@"D:\SZS Tools\Luigi's Mansion\BinVertTest.obj", FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
 				w.Write(writer.ToString().ToCharArray());

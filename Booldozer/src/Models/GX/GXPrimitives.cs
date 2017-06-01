@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Booldozer.Models
+namespace Booldozer.Models.GX
 {
 	public enum GXPrimitiveType
 	{
@@ -11,5 +11,6 @@ namespace Booldozer.Models
 		TriangleStrip = 0x98,
 		TriangleFan = 0xA0,
 		Quads = 0x80,
+		None = 0x00
 	}
 }
