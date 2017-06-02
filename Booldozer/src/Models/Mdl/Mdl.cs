@@ -9,17 +9,40 @@ using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Mdl
 {
+	public interface ISectionItem 
+	{
+        void Load(EndianBinaryReader reader);
+    }
+
+	//Not the best way to handle this, but for not its fine
+	public class vec3 : ISectionItem
+	{
+		public Vector3 v {get; private set;}
+		public void Load(EndianBinaryReader reader)
+		{
+			v = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
+		}
+	}
+
 	public class MdlModel : Mesh
 	{
-		ushort[] counts; //20;
-		long[] offsets; //18
+		ushort[] m_Counts; //20;
+		long[] m_Offsets; //18
 		List<Vector3> verticies;
 		List<Vector3> normals;
 		List<Vector2> uvs;
 		List<DrawElement> drawelements;
 		List<GXBatch> shapes;
 		List<ShapePacket> shapepackets;
-		List<Primitive> primitives;
+
+		public List<Vector3> fromVec3(List<vec3> l){
+			List<Vector3> nl = new List<Vector3>();
+			foreach (var vec in l)
+			{
+				nl.Add(vec.v);
+			}
+			return nl;
+		}
 
 		public void WriteObj(string f)
 		{
@@ -73,46 +96,6 @@ namespace Booldozer.Models.Mdl
 				}
 			}
 
-			/*foreach (var primitive in primitives)
-			{
-				var verts = primitive.verts;
-				switch ((GXPrimitiveType)primitive.type)
-				{
-					case GXPrimitiveType.Triangles:
-						writer.WriteLine($"f {verts[0].posIndex + 1} {verts[1].posIndex + 1} {verts[2].posIndex + 1}");
-						break;
-
-					case GXPrimitiveType.TriangleStrip:
-						for (int v = 2; v < verts.Count; v++)
-						{
-							bool even = v % 2 != 0;
-							var tri = new int[3];
-							tri[0] = verts[v - 2].posIndex;
-							tri[1] = even ? verts[v].posIndex : verts[v - 1].posIndex;
-							tri[2] = even ? verts[v - 1].posIndex : verts[v].posIndex;
-							if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-							{
-								writer.WriteLine($"f {tri[0] + 1} {tri[1] + 1} {tri[2] + 1}");
-							}
-						}
-						break;
-
-					case GXPrimitiveType.TriangleFan:
-						for (int v = 1; v < verts.Count; v++)
-						{
-							var tri = new int[3];
-							tri[0] = verts[v].posIndex + 1;
-							tri[1] = verts[v + 1].posIndex + 1;
-							tri[2] = verts[0].posIndex + 1;
-
-							if (tri[0] != tri[1] && tri[1] != tri[2] && tri[2] != tri[0])
-							{
-								writer.WriteLine($"f {tri[0]} {tri[1]} {tri[2]}");
-							}
-						}
-						break;
-				}
-			}*/
 			using (FileStream s = new FileStream(f, FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
@@ -130,22 +113,29 @@ namespace Booldozer.Models.Mdl
 			throw new NotImplementedException();
 		}
 
+		public List<T> LoadSection<T>(EndianBinaryReader stream, long offsetIndex, ushort m_CountIndex) where T : ISectionItem, new(){
+            List<T> l = new List<T>();
+            stream.BaseStream.Seek(m_Offsets[offsetIndex], 0);
+            for (int i = 0; i < m_Counts[m_CountIndex]; i++)
+            {
+                var r = new T();
+                r.Load(stream);
+                l.Add(r);
+            }
+            return l;
+        }
+
 		public MdlModel()
 		{
-			counts = new ushort[20];
-			offsets = new long[18];
+			m_Counts = new ushort[20];
+			m_Offsets = new long[18];
 		}
 		public MdlModel(string path)
 		{
-			counts = new ushort[20];
-			offsets = new long[18];
-			verticies = new List<Vector3>();
-			normals = new List<Vector3>();
+			m_Counts = new ushort[20];
+			m_Offsets = new long[18];
 			uvs = new List<Vector2>();
-			drawelements = new List<DrawElement>();
 			shapes = new List<GXBatch>();
-			shapepackets = new List<ShapePacket>();
-			primitives = new List<Primitive>();
 
 			using (FileStream fs = new FileStream(path, FileMode.Open))
 			{
@@ -153,95 +143,34 @@ namespace Booldozer.Models.Mdl
 				stream.ReadInt32(); //ignore the magic
 				for (int i = 0; i < 20; i++)
 				{
-					counts[i] = stream.ReadUInt16();
+					m_Counts[i] = stream.ReadUInt16();
 				}
 				stream.BaseStream.Seek(0x30, 0);
 				for (int i = 0; i < 18; i++)
 				{
-					offsets[i] = stream.ReadUInt32();
+					m_Offsets[i] = stream.ReadUInt32();
 				}
 
-				stream.BaseStream.Seek(offsets[6], 0);
-				for (int i = 0; i < counts[6]; i++)
-				{
-					verticies.Add(new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()));
-				}
+				verticies = fromVec3(LoadSection<vec3>(stream, 6, 6));
+				normals = fromVec3(LoadSection<vec3>(stream, 7, 7));
+				drawelements = LoadSection<DrawElement>(stream, 17, 17);
+				shapepackets = LoadSection<ShapePacket>(stream, 1, 3);
 
-				stream.BaseStream.Seek(offsets[7], 0);
-				for (int i = 0; i < counts[7]; i++)
-				{
-					normals.Add(new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()));
-				}
-
-				stream.BaseStream.Seek(offsets[9], 0);
-				for (int i = 0; i < counts[9]; i++)
+				stream.BaseStream.Seek(m_Offsets[9], 0);
+				for (int i = 0; i < m_Counts[9]; i++)
 				{
 					uvs.Add(new Vector2(stream.ReadSingle(), stream.ReadSingle()));
 				}
 
-				Console.WriteLine("Reading Draw Elements");
-				stream.BaseStream.Seek(offsets[17], 0);
-				for (int i = 0; i < counts[17]; i++)
-				{
-					drawelements.Add(new DrawElement(stream));
-				}
-
-				Console.WriteLine("Reading Shape Packets");
-				stream.BaseStream.Seek(offsets[1], 0);
-				for (int i = 0; i < counts[3]; i++)
-				{
-					shapepackets.Add(new ShapePacket(stream));
-				}
-
-				Console.WriteLine("Reading Shapes");
-				stream.BaseStream.Seek(offsets[16], 0);
-				for (int i = 0; i < counts[18]; i++)
+				stream.BaseStream.Seek(m_Offsets[16], 0);
+				for (int i = 0; i < m_Counts[18]; i++)
 				{
 					GXBatch bat = new GXBatch();
 					bat.LoadMdlBatch(stream, shapepackets);
 					shapes.Add(bat);
 				}
 
-				foreach (var element in drawelements)
-				{
-					//var shape = shapes[element.shapeIndex];
-					/*for (int i = shape.first; i < shape.first + shape.count; i++)
-					{
-						var shapepacket = shapepackets[i];
-						stream.BaseStream.Seek(shapepacket.dataOffset, 0);
-						while (stream.BaseStream.Position <= shapepacket.dataOffset + shapepacket.dataSize)
-						{
-							primitives.Add(new Primitive(stream, counts));
-
-                            var op = stream.ReadByte();
-                            var num = stream.ReadUInt16();
-                            var faceIndicices = new int[num];
-                            for (int j = 0; j < num; j++)
-                            {
-                                stream.ReadByte(); //Mat Index
-                                stream.ReadByte(); //Tex0?
-                                stream.ReadByte(); //Tex1?
-                                faceIndicices[j] = stream.ReadUInt16(); //pos
-                                if (counts[7] > 0)
-                                {
-                                    stream.ReadUInt16(); //normal   
-                                }
-                                if (counts[8] > 0)
-                                {
-                                    stream.ReadUInt16(); //color   
-                                }
-                                if (counts[9] > 0)
-                                {
-                                    stream.ReadUInt16(); //uv   
-                                }
-                            }
-                            shapepackets[i].faces.AddRange(faceIndicices);
-
-						}
-					}*/
-				}
-
-				WriteObj(@"D:\SZS Tools\Luigi's Mansion\derp.obj");
+				WriteObj("derp.obj");
 			}
 		}
 	}
