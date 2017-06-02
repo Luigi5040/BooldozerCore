@@ -38,6 +38,7 @@ namespace Booldozer.Models.Mdl
 
 		List<Material> materials;
 		List<TexObj> texobjs;
+		List<BinaryTextureImage> textures;
 
 		public List<Vector3> fromVec3(List<vec3> l)
 		{
@@ -58,6 +59,7 @@ namespace Booldozer.Models.Mdl
 			StringWriter mtlWriter = new StringWriter();
 
 			objWriter.WriteLine("# dumped with booldozer");
+			objWriter.WriteLine($"mtllib { fileName }.mtl");
 
 			foreach (var vert in verticies)
 			{
@@ -73,18 +75,33 @@ namespace Booldozer.Models.Mdl
 			if (uvs.Count != 0)
 			{
 				foreach (var vert in uvs)
-					objWriter.WriteLine($"vt { vert.X } { vert.Y }");
+					objWriter.WriteLine($"vt { vert.X } { 1 - vert.Y }");
 			}
 
 			objWriter.WriteLine();
 
 			int index = 0;
-			foreach (GXBatch bat in shapes)
+			foreach (DrawElement drw in drawelements)
 			{
-				objWriter.WriteLine($"o { index++ }");
-				//objWriter.WriteLine($"usemtl { index++ }");
+				Material mat = materials[drw.matIndex];
+				GXBatch shp = shapes[drw.shapeIndex];
 
-				for (int i = 0; i < bat.RawVertices.Count; i += 3)
+				mtlWriter.WriteLine($"newmtl { index }");
+				mtlWriter.WriteLine($"Kd { ((mat.color & 0xFF000000) >> 24) / 255 } { ((mat.color & 0x00FF0000) >> 16) / 255 } { ((mat.color & 0x0000FF00) >> 8) / 255 }");
+				mtlWriter.WriteLine($"d { (mat.color & 0x000000FF) / 255 }");
+
+				if (mat.num_tev_stages > 0)
+				{
+					TexObj texObj = texobjs[mat.stages[0].texobj_index];
+					mtlWriter.WriteLine($"map_Kd { index }.png");
+					BinaryTextureImage tex = textures[texObj.textureIndex];
+					tex.SaveImageToDisk($"{ dirPath }\\{ index }.png", tex.GetData(), tex.Width, tex.Height);
+				}
+
+				objWriter.WriteLine($"o { index }");
+				objWriter.WriteLine($"usemtl { index }");
+
+				for (int i = 0; i < shp.RawVertices.Count; i += 3)
 				{
 					string[] verts = new string[3] { "", "", "" };
 
@@ -94,18 +111,20 @@ namespace Booldozer.Models.Mdl
 						string uv = "";
 						string norm = "";
 
-						if (bat.ActiveAttributes.Contains(GXAttribute.Position))
-							pos = $"{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Position)] + 1) }/";
-						if (bat.ActiveAttributes.Contains(GXAttribute.Tex0))
-							uv = $"{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Tex0)] + 1) }";
-						if (bat.ActiveAttributes.Contains(GXAttribute.Normal))
-							norm = $"/{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Normal)] + 1) }/";
+						if (shp.ActiveAttributes.Contains(GXAttribute.Position))
+							pos = $"{ Convert.ToString(shp.RawVertices[i + j].Indices[shp.ActiveAttributes.IndexOf(GXAttribute.Position)] + 1) }/";
+						if (shp.ActiveAttributes.Contains(GXAttribute.Tex0))
+							uv = $"{ Convert.ToString(shp.RawVertices[i + j].Indices[shp.ActiveAttributes.IndexOf(GXAttribute.Tex0)] + 1) }";
+						if (shp.ActiveAttributes.Contains(GXAttribute.Normal))
+							norm = $"/{ Convert.ToString(shp.RawVertices[i + j].Indices[shp.ActiveAttributes.IndexOf(GXAttribute.Normal)] + 1) }/";
 
 						verts[j] = $"{ pos }{ uv }{ norm }";
 					}
 
 					objWriter.WriteLine($"f { verts[0] } { verts[1] } { verts[2] }");
 				}
+
+				index++;
 			}
 
 			using (FileStream s = new FileStream($"{ dirPath }\\{ fileName }.obj", FileMode.Create, FileAccess.Write))
@@ -156,6 +175,7 @@ namespace Booldozer.Models.Mdl
 			uvs = new List<Vector2>();
 			shapes = new List<GXBatch>();
 			globalMatrixTable = new List<Matrix4x3>();
+			textures = new List<BinaryTextureImage>();
 
 			using (FileStream fs = new FileStream(path, FileMode.Open))
 			{
@@ -185,23 +205,37 @@ namespace Booldozer.Models.Mdl
 				}
 
 				stream.BaseStream.Seek(m_Offsets[2], 0);
-                for (int i = 0; i < m_Counts[5]; i++)
-                {
-                    Matrix4x3 mat = new Matrix4x3(
-                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle())
-                    );
-                    globalMatrixTable.Add(mat);                    
-                }
+				for (int i = 0; i < m_Counts[5]; i++)
+				{
+					Matrix4x3 mat = new Matrix4x3(
+						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle())
+					);
+					globalMatrixTable.Add(mat);
+				}
 
 				stream.BaseStream.Seek(m_Offsets[16], 0);
-				for (int i = 0; i < m_Counts[18]; i++)
+				for (int i = 0; i < m_Counts[19]; i++)
 				{
 					GXBatch bat = new GXBatch();
 					bat.LoadMdlBatch(stream, shapepackets);
 					shapes.Add(bat);
+				}
+
+				stream.BaseStream.Seek(m_Offsets[12], SeekOrigin.Begin);
+				for (int i = 0; i < m_Counts[14]; i++)
+				{
+					int textureOffset = stream.ReadInt32();
+					long nextOffsetPos = stream.BaseStream.Position;
+
+					stream.BaseStream.Seek(textureOffset, SeekOrigin.Begin);
+					BinaryTextureImage img = new BinaryTextureImage();
+					img.Load(stream, textureOffset, 1);
+					textures.Add(img);
+
+					stream.BaseStream.Seek(nextOffsetPos, SeekOrigin.Begin);
 				}
 
 				WriteObj(@"D:\SZS Tools\Luigi's Mansion\MdlTest\MdlTest.obj");

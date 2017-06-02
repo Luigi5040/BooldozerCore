@@ -8,7 +8,7 @@ namespace Booldozer.Models.Mdl
 
     public class TexObj : ISectionItem
     {
-        ushort textureIndex;
+        public ushort textureIndex;
         byte unk1;
         byte unk2;
         byte unk3;
@@ -28,7 +28,7 @@ namespace Booldozer.Models.Mdl
     public class TevStage
     {
         ushort unk0;
-        ushort texobj_index;
+        public ushort texobj_index;
         //float[] unk1 = new float[7];
         public TevStage(EndianBinaryReader stream)
         {
@@ -40,13 +40,13 @@ namespace Booldozer.Models.Mdl
 
     public class Material : ISectionItem
     {
-        uint color;
-        ushort unk1;
-        byte unk2;
-        byte num_tev_stages;
-        byte unk4;
+        public uint color;
+        public ushort unk1;
+        public byte unk2;
+        public byte num_tev_stages;
+        public byte unk4;
         //23 bytes of padding
-        TevStage[] stages = new TevStage[8];
+        public TevStage[] stages = new TevStage[8];
 
         public Material(){}
 
@@ -57,6 +57,9 @@ namespace Booldozer.Models.Mdl
             unk2 = stream.ReadByte();
             num_tev_stages = stream.ReadByte();
             unk4 = stream.ReadByte();
+
+			stream.Skip(23);
+
             for (int i = 0; i < 8; i++)
             {
                 stages[i] = new TevStage(stream);

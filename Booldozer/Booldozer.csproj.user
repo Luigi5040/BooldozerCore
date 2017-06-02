@@ -2,6 +2,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'Default' ">
     <StartAction>Project</StartAction>
-    <StartArguments>"D:\Dropbox\Public\Collision Tutorial Utilities\Lunaboy's RARC Tools\gaka\model\gaka.mdl"</StartArguments>
+    <StartArguments>"D:\Dropbox\LM Docs\room_02\room.bin"</StartArguments>
   </PropertyGroup>
 </Project>

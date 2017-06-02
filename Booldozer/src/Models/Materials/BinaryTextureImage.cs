@@ -132,6 +132,10 @@ namespace Booldozer.Materials
         private Palette m_imagePalette;
         private byte[] m_rgbaImageData;
 
+		public BinaryTextureImage()
+		{
+		}
+
         public BinaryTextureImage(string name, Bitmap bmp, TextureFormats format)
         {
             Name = name;
@@ -175,6 +179,18 @@ namespace Booldozer.Materials
         public void Load(EndianBinaryReader stream, long headerStart, int imageIndex = 0)
         {
             Format = (TextureFormats)stream.ReadByte();
+			if (Format == TextureFormats.C14X2)
+				Format = TextureFormats.CMPR;
+			else if (Format == TextureFormats.RGB565)
+				Format = TextureFormats.I8;
+			else if (Format == TextureFormats.IA8)
+				Format = TextureFormats.I4;
+			else if (Format == TextureFormats.RGBA32)
+				Format = TextureFormats.IA8;
+			else if (Format == (TextureFormats)7)
+				Format = TextureFormats.RGB565;
+			else if (Format == TextureFormats.C4)
+				Format = TextureFormats.RGB5A3;
             AlphaSetting = stream.ReadByte();
             Width = stream.ReadUInt16();
             Height = stream.ReadUInt16();
@@ -183,7 +199,7 @@ namespace Booldozer.Materials
             byte unknown1 = stream.ReadByte();
             PaletteFormat = (PaletteFormats)stream.ReadByte();
             PaletteCount = stream.ReadUInt16();
-            int paletteDataOffset = stream.ReadInt32();
+			int paletteDataOffset = stream.ReadInt32();
             BorderColor = new Color32(stream.ReadByte(), stream.ReadByte(), stream.ReadByte(), stream.ReadByte());
             MinFilter = (FilterMode)stream.ReadByte();
             MagFilter = (FilterMode)stream.ReadByte();
@@ -201,7 +217,7 @@ namespace Booldozer.Materials
 
             // Now load and decode image data into an ARGB array.
             stream.BaseStream.Position = headerStart + imageDataOffset + (0x20 * imageIndex);
-            m_rgbaImageData = DecodeData(stream, Width, Height, Format, m_imagePalette, PaletteFormat);
+			m_rgbaImageData = DecodeData(stream, Width, Height, Format, m_imagePalette, PaletteFormat);
         }
 
         public void SaveImageToDisk(string outputFile, byte[] imageData, int width, int height)

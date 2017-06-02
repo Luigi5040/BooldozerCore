@@ -244,7 +244,7 @@ namespace Booldozer.Models.Bin
 			if (UVs[0].Count != 0)
 			{
 				for (int i = 0; i < UVs[0].Count; i++)
-					objWriter.WriteLine($"vt { UVs[0][i].X } { UVs[0][i].Y }");
+					objWriter.WriteLine($"vt { UVs[0][i].X } { 1 - UVs[0][i].Y }");
 			}
 
 			// Write normals, if present
