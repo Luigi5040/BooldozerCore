@@ -63,6 +63,7 @@
     <Compile Include="src\Models\Bin\Geometry.cs" />
     <Compile Include="src\Models\Bin\Materials.cs" />
     <Compile Include="src\Models\Bin\Scenegraph.cs" />
+    <Compile Include="src\Models\Mdl\Materials.cs" />
     <Compile Include="src\Models\Mdl\Geometry.cs" />
     <Compile Include="src\Models\Mdl\Mdl.cs" />
     <Compile Include="src\Models\GX\GXAttributes.cs" />

@@ -7,5 +7,6 @@ obj/
 *.obj
 *.bin
 *.arc
+*.mtl
 textures/
 Booldozer.userprefs

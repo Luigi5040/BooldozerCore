@@ -34,6 +34,10 @@ namespace Booldozer.Models.Mdl
 		List<DrawElement> drawelements;
 		List<GXBatch> shapes;
 		List<ShapePacket> shapepackets;
+		List<Matrix4x3> globalMatrixTable;
+
+		List<Material> materials;
+		List<TexObj> texobjs;
 
 		public List<Vector3> fromVec3(List<vec3> l)
 		{
@@ -151,6 +155,7 @@ namespace Booldozer.Models.Mdl
 			m_Offsets = new long[18];
 			uvs = new List<Vector2>();
 			shapes = new List<GXBatch>();
+			globalMatrixTable = new List<Matrix4x3>();
 
 			using (FileStream fs = new FileStream(path, FileMode.Open))
 			{
@@ -170,12 +175,26 @@ namespace Booldozer.Models.Mdl
 				normals = fromVec3(LoadSection<vec3>(stream, 7, 7));
 				drawelements = LoadSection<DrawElement>(stream, 17, 17);
 				shapepackets = LoadSection<ShapePacket>(stream, 1, 3);
+				materials = LoadSection<Material>(stream, 14, 18);
+				texobjs = LoadSection<TexObj>(stream, 15, 16);
 
 				stream.BaseStream.Seek(m_Offsets[9], 0);
 				for (int i = 0; i < m_Counts[9]; i++)
 				{
 					uvs.Add(new Vector2(stream.ReadSingle(), stream.ReadSingle()));
 				}
+
+				stream.BaseStream.Seek(m_Offsets[2], 0);
+                for (int i = 0; i < m_Counts[5]; i++)
+                {
+                    Matrix4x3 mat = new Matrix4x3(
+                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+                        new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle())
+                    );
+                    globalMatrixTable.Add(mat);                    
+                }
 
 				stream.BaseStream.Seek(m_Offsets[16], 0);
 				for (int i = 0; i < m_Counts[18]; i++)
