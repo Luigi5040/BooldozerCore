@@ -9,27 +9,73 @@ using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Mdl
 {
-    public class MdlModel : Mesh
-    {
-        ushort[] counts; //20;
-        long[] offsets; //18
-        List<Vector3d> verticies;
-        List<DrawElement> drawelements;
-        List<Shape> shapes;
-        List<ShapePacket> shapepackets;
-        List<Primitive> primitives;
+	public class MdlModel : Mesh
+	{
+		ushort[] counts; //20;
+		long[] offsets; //18
+		List<Vector3> verticies;
+		List<Vector3> normals;
+		List<Vector2> uvs;
+		List<DrawElement> drawelements;
+		List<GXBatch> shapes;
+		List<ShapePacket> shapepackets;
+		List<Primitive> primitives;
 
-        public void WriteObj(string f)
-        {
-            StringWriter writer = new StringWriter();
-            writer.WriteLine("#dumped with booldozer");
-            foreach (var vert in verticies)
-            {
-                writer.WriteLine($"v {vert.X} {vert.Y} {vert.Z}");
-            }
-            foreach (var primitive in primitives)
-            {
-                var verts = primitive.verts;
+		public void WriteObj(string f)
+		{
+			StringWriter writer = new StringWriter();
+			writer.WriteLine("#dumped with booldozer");
+			foreach (var vert in verticies)
+			{
+				writer.WriteLine($"v {vert.X} {vert.Y} {vert.Z}");
+			}
+
+			if (normals.Count != 0)
+			{
+				foreach (var vert in normals)
+					writer.WriteLine($"vn { vert.X } { vert.Y } { vert.Z }");
+			}
+
+			if (uvs.Count != 0)
+			{
+				foreach (var vert in uvs)
+					writer.WriteLine($"vt { vert.X } { vert.Y }");	
+			}
+
+			writer.WriteLine();
+
+			int index = 0;
+			foreach (GXBatch bat in shapes)
+			{
+				writer.WriteLine($"o { index++ }");
+				int posIndex = bat.ActiveAttributes.IndexOf(GXAttribute.Position);
+				for (int i = 0; i < bat.RawVertices.Count; i += 3)
+				{
+					string[] verts = new string[3] { "", "", "" };
+
+					for (int j = 0; j < 3; j++)
+					{
+						string pos = "";
+						string uv = "";
+						string norm = "";
+
+						if (bat.ActiveAttributes.Contains(GXAttribute.Position))
+							pos = $"{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Position)] + 1) }/";
+						if (bat.ActiveAttributes.Contains(GXAttribute.Tex0))
+							uv = $"{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Tex0)] + 1) }";
+						if (bat.ActiveAttributes.Contains(GXAttribute.Normal))
+							norm = $"/{ Convert.ToString(bat.RawVertices[i + j].Indices[bat.ActiveAttributes.IndexOf(GXAttribute.Normal)] + 1) }/";
+
+						verts[j] = $"{ pos }{ uv }{ norm }";
+					}
+
+					writer.WriteLine($"f { verts[0] } { verts[1] } { verts[2] }");
+				}
+			}
+
+			/*foreach (var primitive in primitives)
+			{
+				var verts = primitive.verts;
 				switch ((GXPrimitiveType)primitive.type)
 				{
 					case GXPrimitiveType.Triangles:
@@ -51,7 +97,7 @@ namespace Booldozer.Models.Mdl
 						}
 						break;
 
-				 	 case GXPrimitiveType.TriangleFan:
+					case GXPrimitiveType.TriangleFan:
 						for (int v = 1; v < verts.Count; v++)
 						{
 							var tri = new int[3];
@@ -66,13 +112,13 @@ namespace Booldozer.Models.Mdl
 						}
 						break;
 				}
-            }
-            using (FileStream s = new FileStream(f, FileMode.Create, FileAccess.Write))
+			}*/
+			using (FileStream s = new FileStream(f, FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
 				w.Write(writer.ToString().ToCharArray());
 			}
-        }
+		}
 
 		public override void Load(EndianBinaryReader reader)
 		{
@@ -85,68 +131,88 @@ namespace Booldozer.Models.Mdl
 		}
 
 		public MdlModel()
-        {
-            counts = new ushort[20];
-            offsets = new long[18];
-        }
-        public MdlModel(string path)
-        {
-            counts = new ushort[20];
-            offsets = new long[18];
-            verticies = new List<Vector3d>();
-            drawelements =  new List<DrawElement>();
-            shapes =  new List<Shape>();
-            shapepackets = new List<ShapePacket>();
-            primitives = new List<Primitive>();
-            using(FileStream fs = new FileStream(path, FileMode.Open))
-            {
-                EndianBinaryReader stream = new EndianBinaryReader(fs, Endian.Big);
-                stream.ReadInt32(); //ignore the magic
-                for (int i = 0; i < 20; i++)
-                {
-                    counts[i] = stream.ReadUInt16();
-                }
-                stream.BaseStream.Seek(0x30, 0);
-                for (int i = 0; i < 18; i++)
-                {
-                    offsets[i] = stream.ReadUInt32();
-                }
+		{
+			counts = new ushort[20];
+			offsets = new long[18];
+		}
+		public MdlModel(string path)
+		{
+			counts = new ushort[20];
+			offsets = new long[18];
+			verticies = new List<Vector3>();
+			normals = new List<Vector3>();
+			uvs = new List<Vector2>();
+			drawelements = new List<DrawElement>();
+			shapes = new List<GXBatch>();
+			shapepackets = new List<ShapePacket>();
+			primitives = new List<Primitive>();
 
-                stream.BaseStream.Seek(offsets[6], 0);
-                for (int i = 0; i < counts[6]; i++)
-                {
-                    verticies.Add(new Vector3d(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()));
-                }
-                Console.WriteLine("Reading Draw Elements");
-                stream.BaseStream.Seek(offsets[17], 0);
-                for (int i = 0; i < counts[17]; i++)
-                {
-                    drawelements.Add(new DrawElement(stream));
-                }
-                Console.WriteLine("Reading Shapes");
-                stream.BaseStream.Seek(offsets[16], 0);
-                for (int i = 0; i < counts[18]; i++)
-                {
-                    shapes.Add(new Shape(stream));
-                }
-                Console.WriteLine("Reading Shape Packets");
-                stream.BaseStream.Seek(offsets[1], 0);
-                for (int i = 0; i < counts[3]; i++)
-                {
-                    shapepackets.Add(new ShapePacket(stream));
-                }
+			using (FileStream fs = new FileStream(path, FileMode.Open))
+			{
+				EndianBinaryReader stream = new EndianBinaryReader(fs, Endian.Big);
+				stream.ReadInt32(); //ignore the magic
+				for (int i = 0; i < 20; i++)
+				{
+					counts[i] = stream.ReadUInt16();
+				}
+				stream.BaseStream.Seek(0x30, 0);
+				for (int i = 0; i < 18; i++)
+				{
+					offsets[i] = stream.ReadUInt32();
+				}
 
-                foreach (var element in drawelements)
-                {
-                    var shape = shapes[element.shapeIndex];
-                    for (int i = shape.first; i < shape.first+shape.count; i++)
-                    {
-                        var shapepacket = shapepackets[i];
-                        stream.BaseStream.Seek(shapepacket.dataOffset, 0);
-                        while (stream.BaseStream.Position <= shapepacket.dataOffset + shapepacket.dataSize)
-                        {
-                            primitives.Add(new Primitive(stream, counts));
-                            /*
+				stream.BaseStream.Seek(offsets[6], 0);
+				for (int i = 0; i < counts[6]; i++)
+				{
+					verticies.Add(new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()));
+				}
+
+				stream.BaseStream.Seek(offsets[7], 0);
+				for (int i = 0; i < counts[7]; i++)
+				{
+					normals.Add(new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()));
+				}
+
+				stream.BaseStream.Seek(offsets[9], 0);
+				for (int i = 0; i < counts[9]; i++)
+				{
+					uvs.Add(new Vector2(stream.ReadSingle(), stream.ReadSingle()));
+				}
+
+				Console.WriteLine("Reading Draw Elements");
+				stream.BaseStream.Seek(offsets[17], 0);
+				for (int i = 0; i < counts[17]; i++)
+				{
+					drawelements.Add(new DrawElement(stream));
+				}
+
+				Console.WriteLine("Reading Shape Packets");
+				stream.BaseStream.Seek(offsets[1], 0);
+				for (int i = 0; i < counts[3]; i++)
+				{
+					shapepackets.Add(new ShapePacket(stream));
+				}
+
+				Console.WriteLine("Reading Shapes");
+				stream.BaseStream.Seek(offsets[16], 0);
+				for (int i = 0; i < counts[18]; i++)
+				{
+					GXBatch bat = new GXBatch();
+					bat.LoadMdlBatch(stream, shapepackets);
+					shapes.Add(bat);
+				}
+
+				foreach (var element in drawelements)
+				{
+					//var shape = shapes[element.shapeIndex];
+					/*for (int i = shape.first; i < shape.first + shape.count; i++)
+					{
+						var shapepacket = shapepackets[i];
+						stream.BaseStream.Seek(shapepacket.dataOffset, 0);
+						while (stream.BaseStream.Position <= shapepacket.dataOffset + shapepacket.dataSize)
+						{
+							primitives.Add(new Primitive(stream, counts));
+
                             var op = stream.ReadByte();
                             var num = stream.ReadUInt16();
                             var faceIndicices = new int[num];
@@ -170,13 +236,13 @@ namespace Booldozer.Models.Mdl
                                 }
                             }
                             shapepackets[i].faces.AddRange(faceIndicices);
-                            */
-                        }
-                    }
-                }
 
-                WriteObj("derp.obj");
-            }
-        }
-    }
+						}
+					}*/
+				}
+
+				WriteObj(@"D:\SZS Tools\Luigi's Mansion\derp.obj");
+			}
+		}
+	}
 }

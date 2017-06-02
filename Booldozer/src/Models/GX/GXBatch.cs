@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using GameFormatReader.Common;
+using Booldozer.Models.Mdl;
 
 namespace Booldozer.Models.GX
 {
@@ -52,9 +53,77 @@ namespace Booldozer.Models.GX
 			//UploadBufferData();
 		}
 
-		public void LoadMdlBatch(EndianBinaryReader reader)
+		public void LoadMdlBatch(EndianBinaryReader reader, List<ShapePacket> packets)
 		{
-			UploadBufferData();
+			uint attributeField = reader.ReadUInt32();
+			ushort packetCount = reader.ReadUInt16();
+			ushort firstPacketIndex = reader.ReadUInt16();
+
+			long nextPos = reader.BaseStream.Position;
+
+			int mask = 1;
+			for (int i = 0; i < 24; i++)
+			{
+				int attrib = (int)(attributeField & mask) >> i;
+
+				if (attrib == 1)
+					ActiveAttributes.Add((GXAttribute)i);
+
+				mask = mask << 1;
+			}
+
+			for (int i = 0; i < packetCount; i++)
+			{
+				reader.BaseStream.Seek(packets[i + firstPacketIndex].dataOffset, System.IO.SeekOrigin.Begin);
+				RawVertices.AddRange(ReadMdlPrimitives(reader));
+			}
+
+			reader.BaseStream.Seek(nextPos, System.IO.SeekOrigin.Begin);
+			//UploadBufferData();
+		}
+
+		private List<GXVertex> ReadMdlPrimitives(EndianBinaryReader reader)
+		{
+			// OK. As far as we can tell, mdl suckerpunches our normal
+			// understanding of the GC's GX, so we have to deal with a
+			// hardcoded implementation.
+
+			List<GXVertex> outList = new List<GXVertex>();
+
+			GXPrimitiveType curPrim = (GXPrimitiveType)reader.ReadByte();
+			while (curPrim != GXPrimitiveType.None)
+			{
+				List<GXVertex> tempVerts = new List<GXVertex>();
+				ushort vertCount = reader.ReadUInt16();
+
+				for (int i = 0; i < vertCount; i++)
+				{
+					List<int> tempList = new List<int>();
+
+					byte mtxPos1 = reader.ReadByte();
+					byte mtxPos2 = reader.ReadByte();
+					byte mtxPos3 = reader.ReadByte();
+					ushort posIndex = reader.ReadUInt16();
+					ushort normalIndex = reader.ReadUInt16();
+					ushort tex0Index = reader.ReadUInt16();
+
+					if (ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex))
+						tempList.Add((int)mtxPos1 / 3);
+					if (ActiveAttributes.Contains(GXAttribute.Position))
+						tempList.Add(posIndex);
+					if (ActiveAttributes.Contains(GXAttribute.Normal))
+						tempList.Add(normalIndex);
+					if (ActiveAttributes.Contains(GXAttribute.Tex0))
+						tempList.Add(tex0Index);
+
+					tempVerts.Add(new GXVertex(tempList.ToArray()));
+				}
+
+				outList.AddRange(ConvertTopologyToTriangles(curPrim, tempVerts));
+				curPrim = (GXPrimitiveType)reader.ReadByte();
+			}
+
+			return outList;
 		}
 
 		private List<GXVertex> ReadPrimitives(EndianBinaryReader reader)

@@ -18,5 +18,10 @@ namespace Booldozer.Models.GX
 			for (int i = 0; i < compCount; i++)
 				Indices[i] = reader.ReadInt16();
 		}
+
+		public GXVertex(int[] indices)
+		{
+			Indices = indices;
+		}
 	}
 }
