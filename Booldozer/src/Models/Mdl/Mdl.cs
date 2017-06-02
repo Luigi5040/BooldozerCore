@@ -9,15 +9,15 @@ using Booldozer.Models.GX;
 
 namespace Booldozer.Models.Mdl
 {
-	public interface ISectionItem 
+	public interface ISectionItem
 	{
-        void Load(EndianBinaryReader reader);
-    }
+		void Load(EndianBinaryReader reader);
+	}
 
 	//Not the best way to handle this, but for not its fine
 	public class vec3 : ISectionItem
 	{
-		public Vector3 v {get; private set;}
+		public Vector3 v { get; private set; }
 		public void Load(EndianBinaryReader reader)
 		{
 			v = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
@@ -35,7 +35,8 @@ namespace Booldozer.Models.Mdl
 		List<GXBatch> shapes;
 		List<ShapePacket> shapepackets;
 
-		public List<Vector3> fromVec3(List<vec3> l){
+		public List<Vector3> fromVec3(List<vec3> l)
+		{
 			List<Vector3> nl = new List<Vector3>();
 			foreach (var vec in l)
 			{
@@ -46,32 +47,39 @@ namespace Booldozer.Models.Mdl
 
 		public void WriteObj(string f)
 		{
-			StringWriter writer = new StringWriter();
-			writer.WriteLine("#dumped with booldozer");
+			string dirPath = Path.GetDirectoryName(f);
+			string fileName = Path.GetFileNameWithoutExtension(f);
+
+			StringWriter objWriter = new StringWriter();
+			StringWriter mtlWriter = new StringWriter();
+
+			objWriter.WriteLine("# dumped with booldozer");
+
 			foreach (var vert in verticies)
 			{
-				writer.WriteLine($"v {vert.X} {vert.Y} {vert.Z}");
+				objWriter.WriteLine($"v {vert.X} {vert.Y} {vert.Z}");
 			}
 
 			if (normals.Count != 0)
 			{
 				foreach (var vert in normals)
-					writer.WriteLine($"vn { vert.X } { vert.Y } { vert.Z }");
+					objWriter.WriteLine($"vn { vert.X } { vert.Y } { vert.Z }");
 			}
 
 			if (uvs.Count != 0)
 			{
 				foreach (var vert in uvs)
-					writer.WriteLine($"vt { vert.X } { vert.Y }");	
+					objWriter.WriteLine($"vt { vert.X } { vert.Y }");
 			}
 
-			writer.WriteLine();
+			objWriter.WriteLine();
 
 			int index = 0;
 			foreach (GXBatch bat in shapes)
 			{
-				writer.WriteLine($"o { index++ }");
-				int posIndex = bat.ActiveAttributes.IndexOf(GXAttribute.Position);
+				objWriter.WriteLine($"o { index++ }");
+				//objWriter.WriteLine($"usemtl { index++ }");
+
 				for (int i = 0; i < bat.RawVertices.Count; i += 3)
 				{
 					string[] verts = new string[3] { "", "", "" };
@@ -92,14 +100,20 @@ namespace Booldozer.Models.Mdl
 						verts[j] = $"{ pos }{ uv }{ norm }";
 					}
 
-					writer.WriteLine($"f { verts[0] } { verts[1] } { verts[2] }");
+					objWriter.WriteLine($"f { verts[0] } { verts[1] } { verts[2] }");
 				}
 			}
 
-			using (FileStream s = new FileStream(f, FileMode.Create, FileAccess.Write))
+			using (FileStream s = new FileStream($"{ dirPath }\\{ fileName }.obj", FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
-				w.Write(writer.ToString().ToCharArray());
+				w.Write(objWriter.ToString().ToCharArray());
+			}
+
+			using (FileStream s = new FileStream($"{ dirPath }\\{ fileName }.mtl", FileMode.Create, FileAccess.Write))
+			{
+				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
+				w.Write(mtlWriter.ToString().ToCharArray());
 			}
 		}
 
@@ -113,17 +127,18 @@ namespace Booldozer.Models.Mdl
 			throw new NotImplementedException();
 		}
 
-		public List<T> LoadSection<T>(EndianBinaryReader stream, long offsetIndex, ushort m_CountIndex) where T : ISectionItem, new(){
-            List<T> l = new List<T>();
-            stream.BaseStream.Seek(m_Offsets[offsetIndex], 0);
-            for (int i = 0; i < m_Counts[m_CountIndex]; i++)
-            {
-                var r = new T();
-                r.Load(stream);
-                l.Add(r);
-            }
-            return l;
-        }
+		public List<T> LoadSection<T>(EndianBinaryReader stream, long offsetIndex, ushort m_CountIndex) where T : ISectionItem, new()
+		{
+			List<T> l = new List<T>();
+			stream.BaseStream.Seek(m_Offsets[offsetIndex], 0);
+			for (int i = 0; i < m_Counts[m_CountIndex]; i++)
+			{
+				var r = new T();
+				r.Load(stream);
+				l.Add(r);
+			}
+			return l;
+		}
 
 		public MdlModel()
 		{
@@ -170,7 +185,7 @@ namespace Booldozer.Models.Mdl
 					shapes.Add(bat);
 				}
 
-				WriteObj("derp.obj");
+				WriteObj(@"D:\SZS Tools\Luigi's Mansion\MdlTest\MdlTest.obj");
 			}
 		}
 	}

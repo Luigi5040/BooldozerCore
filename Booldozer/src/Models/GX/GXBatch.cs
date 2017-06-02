@@ -4,6 +4,7 @@ using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using GameFormatReader.Common;
 using Booldozer.Models.Mdl;
+using Booldozer.Materials;
 
 namespace Booldozer.Models.GX
 {
@@ -11,6 +12,7 @@ namespace Booldozer.Models.GX
 	{
 		public List<GXAttribute> ActiveAttributes { get; private set; }
 		public List<GXVertex> RawVertices { get; private set; }
+		public BinaryTextureImage Texture { get; private set; }
 
 		private int[] m_glIndices;
 		private int m_glEbo;
