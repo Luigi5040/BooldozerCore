@@ -8,5 +8,7 @@ obj/
 *.bin
 *.arc
 *.mtl
+*.png
+*.vscode
 textures/
 Booldozer.userprefs

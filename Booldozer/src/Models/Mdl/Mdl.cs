@@ -23,6 +23,14 @@ namespace Booldozer.Models.Mdl
 			v = new Vector3(reader.ReadSingle(), reader.ReadSingle(), reader.ReadSingle());
 		}
 	}
+	public class vec2 : ISectionItem
+	{
+		public Vector2 v { get; private set; }
+		public void Load(EndianBinaryReader reader)
+		{
+			v = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+		}
+	}
 
 	public class MdlModel : Mesh
 	{
@@ -34,7 +42,7 @@ namespace Booldozer.Models.Mdl
 		List<DrawElement> drawelements;
 		List<GXBatch> shapes;
 		List<ShapePacket> shapepackets;
-		List<Matrix4x3> globalMatrixTable;
+		List<Matrix4> globalMatrixTable;
 
 		List<Material> materials;
 		List<TexObj> texobjs;
@@ -50,9 +58,19 @@ namespace Booldozer.Models.Mdl
 			return nl;
 		}
 
+		public List<Vector2> fromVec2(List<vec2> l)
+		{
+			List<Vector2> nl = new List<Vector2>();
+			foreach (var vec in l)
+			{
+				nl.Add(vec.v);
+			}
+			return nl;
+		}
+
 		public void WriteObj(string f)
 		{
-			string dirPath = Path.GetDirectoryName(f);
+			//string dirPath = Path.GetDirectoryName(f);
 			string fileName = Path.GetFileNameWithoutExtension(f);
 
 			StringWriter objWriter = new StringWriter();
@@ -95,7 +113,7 @@ namespace Booldozer.Models.Mdl
 					TexObj texObj = texobjs[mat.stages[0].texobj_index];
 					mtlWriter.WriteLine($"map_Kd { index }.png");
 					BinaryTextureImage tex = textures[texObj.textureIndex];
-					tex.SaveImageToDisk($"{ dirPath }\\{ index }.png", tex.GetData(), tex.Width, tex.Height);
+					tex.SaveImageToDisk($"{ index }.png", tex.GetData(), tex.Width, tex.Height);
 				}
 
 				objWriter.WriteLine($"o { index }");
@@ -127,13 +145,13 @@ namespace Booldozer.Models.Mdl
 				index++;
 			}
 
-			using (FileStream s = new FileStream($"{ dirPath }\\{ fileName }.obj", FileMode.Create, FileAccess.Write))
+			using (FileStream s = new FileStream($"{ fileName }.obj", FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
 				w.Write(objWriter.ToString().ToCharArray());
 			}
 
-			using (FileStream s = new FileStream($"{ dirPath }\\{ fileName }.mtl", FileMode.Create, FileAccess.Write))
+			using (FileStream s = new FileStream($"{ fileName }.mtl", FileMode.Create, FileAccess.Write))
 			{
 				EndianBinaryWriter w = new EndianBinaryWriter(s, Endian.Big);
 				w.Write(mtlWriter.ToString().ToCharArray());
@@ -172,9 +190,8 @@ namespace Booldozer.Models.Mdl
 		{
 			m_Counts = new ushort[20];
 			m_Offsets = new long[18];
-			uvs = new List<Vector2>();
 			shapes = new List<GXBatch>();
-			globalMatrixTable = new List<Matrix4x3>();
+			globalMatrixTable = new List<Matrix4>();
 			textures = new List<BinaryTextureImage>();
 
 			using (FileStream fs = new FileStream(path, FileMode.Open))
@@ -193,36 +210,67 @@ namespace Booldozer.Models.Mdl
 
 				verticies = fromVec3(LoadSection<vec3>(stream, 6, 6));
 				normals = fromVec3(LoadSection<vec3>(stream, 7, 7));
+				uvs = fromVec2(LoadSection<vec2>(stream, 9, 9));
 				drawelements = LoadSection<DrawElement>(stream, 17, 17);
 				shapepackets = LoadSection<ShapePacket>(stream, 1, 3);
 				materials = LoadSection<Material>(stream, 14, 18);
 				texobjs = LoadSection<TexObj>(stream, 15, 16);
 
-				stream.BaseStream.Seek(m_Offsets[9], 0);
-				for (int i = 0; i < m_Counts[9]; i++)
-				{
-					uvs.Add(new Vector2(stream.ReadSingle(), stream.ReadSingle()));
-				}
-
 				stream.BaseStream.Seek(m_Offsets[2], 0);
 				for (int i = 0; i < m_Counts[5]; i++)
 				{
-					Matrix4x3 mat = new Matrix4x3(
-						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
-						new Vector3(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle())
+					Matrix4 mat = new Matrix4(
+						new Vector4(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector4(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector4(stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle(), stream.ReadSingle()),
+						new Vector4(0, 0, 0, 1)
 					);
-					globalMatrixTable.Add(mat);
+					globalMatrixTable.Add(mat.Inverted());
+				}
+				for (int i = 0; i < m_Counts[4]; i++)
+				{
+					globalMatrixTable.Add(Matrix4.Identity);
 				}
 
 				stream.BaseStream.Seek(m_Offsets[16], 0);
 				for (int i = 0; i < m_Counts[19]; i++)
 				{
 					GXBatch bat = new GXBatch();
-					bat.LoadMdlBatch(stream, shapepackets);
+					bat.LoadMdlBatch(stream, shapepackets, globalMatrixTable, verticies);
 					shapes.Add(bat);
 				}
+
+				/*
+				foreach (var packet in shapepackets)
+				{
+					//create local matrix table for shape packet
+					Matrix4[] localMats = new Matrix4[packet.numMatIndicies];
+					for (int i = 0; i < packet.numMatIndicies; i++)
+					{
+						if (packet.matIndicies[i] != 0xFFFF)
+						{
+							localMats[i] = globalMatrixTable[packet.matIndicies[i]];
+						} else {break;}
+					}
+					//apply to shapes
+					foreach (GXBatch shape in shapes)
+					{
+						if (shape.ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex))
+						{
+							foreach (var vert in shape.RawVertices)
+							{
+								var matIndex = vert.Indices[shape.ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)];
+								Console.WriteLine($"Mat Index: {matIndex}\nLocal Matrix List Size: {localMats.Length}");
+								if(shape.ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex)){
+									Matrix4 mat = localMats[matIndex];
+									Vector4 pos = new Vector4(verticies[vert.Indices[shape.ActiveAttributes.IndexOf(GXAttribute.Position)]]);
+									Vector4.Transform(pos, mat);
+									verticies[vert.Indices[shape.ActiveAttributes.IndexOf(GXAttribute.Position)]] = new Vector3(pos);
+								}
+							}
+						}
+					}
+				}*/
 
 				stream.BaseStream.Seek(m_Offsets[12], SeekOrigin.Begin);
 				for (int i = 0; i < m_Counts[14]; i++)
@@ -238,7 +286,7 @@ namespace Booldozer.Models.Mdl
 					stream.BaseStream.Seek(nextOffsetPos, SeekOrigin.Begin);
 				}
 
-				WriteObj(@"D:\SZS Tools\Luigi's Mansion\MdlTest\MdlTest.obj");
+				WriteObj("mdlTest.obj");
 			}
 		}
 	}

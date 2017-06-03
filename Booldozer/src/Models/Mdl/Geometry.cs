@@ -23,7 +23,6 @@ namespace Booldozer.Models.Mdl
         public short unk0;
         public ushort numMatIndicies;
         public ushort[] matIndicies;
-        public List<int> faces;
         public ShapePacket(){}
         public void Load(EndianBinaryReader stream)
         {

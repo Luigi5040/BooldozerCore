@@ -55,7 +55,7 @@ namespace Booldozer.Models.GX
 			//UploadBufferData();
 		}
 
-		public void LoadMdlBatch(EndianBinaryReader reader, List<ShapePacket> packets)
+		public void LoadMdlBatch(EndianBinaryReader reader, List<ShapePacket> packets, List<Matrix4> gMatTable, List<Vector3> verts)
 		{
 			uint attributeField = reader.ReadUInt32();
 			ushort packetCount = reader.ReadUInt16();
@@ -77,7 +77,33 @@ namespace Booldozer.Models.GX
 			for (int i = 0; i < packetCount; i++)
 			{
 				reader.BaseStream.Seek(packets[i + firstPacketIndex].dataOffset, System.IO.SeekOrigin.Begin);
-				RawVertices.AddRange(ReadMdlPrimitives(reader));
+				List<GXVertex> CurrentPrims = ReadMdlPrimitives(reader);
+				
+				var p =	packets[i + firstPacketIndex];
+				Matrix4[] localMats = new Matrix4[p.numMatIndicies];
+				for (int j = 0; j < p.numMatIndicies; j++)
+				{
+					if (p.matIndicies[j] == 0xFFFF) continue;
+					localMats[j] = gMatTable[p.matIndicies[j]];
+				}
+
+				foreach (var v in CurrentPrims)
+				{
+					if(ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex) && v.Indices[ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)] != 0xFF)
+					{
+						Matrix4 mat = localMats[v.Indices[ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)]];
+						Matrix4 pos = new Matrix4(
+							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].X, 0, 0, 0),
+							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].Y, 0, 0, 0),
+							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].Z, 0, 0, 0),
+							new Vector4(1, 0, 0, 0)
+						);
+						Matrix4 newV = Matrix4.Mult(pos, mat);
+						verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]] = new Vector3(newV[0,0], newV[1,0], newV[2,0]);
+					}
+				}
+
+				RawVertices.AddRange(CurrentPrims);
 			}
 
 			reader.BaseStream.Seek(nextPos, System.IO.SeekOrigin.Begin);
