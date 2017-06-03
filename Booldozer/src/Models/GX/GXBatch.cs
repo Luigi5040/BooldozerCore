@@ -77,29 +77,41 @@ namespace Booldozer.Models.GX
 			for (int i = 0; i < packetCount; i++)
 			{
 				reader.BaseStream.Seek(packets[i + firstPacketIndex].dataOffset, System.IO.SeekOrigin.Begin);
-				List<GXVertex> CurrentPrims = ReadMdlPrimitives(reader);
-				
-				var p =	packets[i + firstPacketIndex];
+				List<GXVertex> CurrentPrims = ReadMdlPrimitives(reader, packets[i + firstPacketIndex]);
+
+				var p = packets[i + firstPacketIndex];
 				Matrix4[] localMats = new Matrix4[p.numMatIndicies];
 				for (int j = 0; j < p.numMatIndicies; j++)
 				{
-					if (p.matIndicies[j] == 0xFFFF) continue;
+					if (p.matIndicies[j] == 0xFFFF)
+						continue;
+
 					localMats[j] = gMatTable[p.matIndicies[j]];
 				}
 
+				List<int> done = new List<int>();
 				foreach (var v in CurrentPrims)
 				{
-					if(ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex) && v.Indices[ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)] != 0xFF)
+					if (done.Contains(v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]))
+						continue;
+
+					if (ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex) && v.Indices[ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)] != 0xFF)
 					{
 						Matrix4 mat = localMats[v.Indices[ActiveAttributes.IndexOf(GXAttribute.PositionMatrixIndex)]];
+
 						Matrix4 pos = new Matrix4(
 							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].X, 0, 0, 0),
 							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].Y, 0, 0, 0),
 							new Vector4(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]].Z, 0, 0, 0),
 							new Vector4(1, 0, 0, 0)
 						);
-						Matrix4 newV = Matrix4.Mult(pos, mat);
-						verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]] = new Vector3(newV[0,0], newV[1,0], newV[2,0]);
+						Matrix4 newV = Matrix4.Mult(mat, pos);
+						verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]] = new Vector3(newV.M11, newV.M21, newV.M31);
+
+
+						//verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]] = Vector3.TransformVector(verts[v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]], mat);
+
+						done.Add(v.Indices[ActiveAttributes.IndexOf(GXAttribute.Position)]);
 					}
 				}
 
@@ -110,7 +122,7 @@ namespace Booldozer.Models.GX
 			//UploadBufferData();
 		}
 
-		private List<GXVertex> ReadMdlPrimitives(EndianBinaryReader reader)
+		private List<GXVertex> ReadMdlPrimitives(EndianBinaryReader reader, ShapePacket curPak)
 		{
 			// OK. As far as we can tell, mdl suckerpunches our normal
 			// understanding of the GC's GX, so we have to deal with a
@@ -128,15 +140,24 @@ namespace Booldozer.Models.GX
 				{
 					List<int> tempList = new List<int>();
 
-					byte mtxPos1 = reader.ReadByte();
-					byte mtxPos2 = reader.ReadByte();
-					byte mtxPos3 = reader.ReadByte();
+					byte mtxPos1 = (byte)(reader.ReadByte() / 3);
+					byte mtxPos2 = (byte)(reader.ReadByte() / 3);
+					byte mtxPos3 = (byte)(reader.ReadByte() / 3);
+
+					if (curPak.matIndicies[mtxPos1] == 0xFFFF)
+					{
+					}
+
+					if (mtxPos1 != mtxPos2)
+					{
+					}
+
 					ushort posIndex = reader.ReadUInt16();
 					ushort normalIndex = reader.ReadUInt16();
 					ushort tex0Index = reader.ReadUInt16();
 
 					if (ActiveAttributes.Contains(GXAttribute.PositionMatrixIndex))
-						tempList.Add((int)mtxPos1 / 3);
+						tempList.Add((int)mtxPos1);
 					if (ActiveAttributes.Contains(GXAttribute.Position))
 						tempList.Add(posIndex);
 					if (ActiveAttributes.Contains(GXAttribute.Normal))
