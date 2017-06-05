@@ -71,6 +71,9 @@
     <Compile Include="src\Models\GX\GXVertex.cs" />
     <Compile Include="src\Models\GX\GXBatch.cs" />
     <Compile Include="src\Models\Mesh.cs" />
+    <Compile Include="src\Jmp\Objects\MapObject.cs" />
+    <Compile Include="src\Jmp\Objects\Enemy.cs" />
+    <Compile Include="src\Jmp\Objects\RenderableMapObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="src\Util\" />
@@ -81,6 +84,7 @@
     <Folder Include="src\Models\Materials\" />
     <Folder Include="src\Models\Bin\" />
     <Folder Include="src\Models\GX\" />
+    <Folder Include="src\Jmp\Objects\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -332,11 +332,6 @@ namespace Booldozer.Models.Bin
 			}
 		}
 
-		public override void Load(EndianBinaryReader reader)
-		{
-			throw new NotImplementedException();
-		}
-
 		public override void Render()
 		{
 			throw new NotImplementedException();
