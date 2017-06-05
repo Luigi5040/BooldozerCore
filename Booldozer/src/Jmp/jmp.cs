@@ -56,17 +56,17 @@ namespace Booldozer.Jmp
 
 		public int getIntField(int entryNum, int fieldNum)
 		{
-			return entries[entryNum*fieldNum].valueInt;
+			return entries[entryNum+fieldNum].valueInt;
 		}
 
 		public float getFloatField(int entryNum, int fieldNum)
 		{
-			return entries[entryNum*fieldNum].valueFloat;
+			return entries[entryNum+fieldNum].valueFloat;
 		}
 
 		public string getStringField(int entryNum, int fieldNum)
 		{
-			return entries[entryNum*fieldNum].valueString;
+			return entries[entryNum+fieldNum].valueString;
 		}
 
 		public void addEntry(jmpValue[] entry)
@@ -78,7 +78,7 @@ namespace Booldozer.Jmp
 		{
 			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
 			{
-				EndianBinaryReader reader = new EndianBinaryReader(fs, Encoding.GetEncoding("shift-jis"), Endian.Big);
+				EndianBinaryReader reader = new EndianBinaryReader(fs, Endian.Big);
 				this.entryCount = reader.ReadInt32();
 				this.fieldCount = reader.ReadInt32();
 				this.entryOff = reader.ReadInt32();
@@ -93,8 +93,9 @@ namespace Booldozer.Jmp
 				{
 					for (int j = 0; j < this.fieldCount; j++)
 					{
-						reader.BaseStream.Seek((this.entryOff + (this.entrySize*i) + this.fields[i].start), SeekOrigin.Begin);
 						var curFeild = this.fields[j]; 
+						reader.BaseStream.Seek((this.entryOff + (this.entrySize*i) + this.fields[j].start), SeekOrigin.Begin);
+
 						jmpValue value = new jmpValue();
 						switch (curFeild.type)
 						{
@@ -103,7 +104,7 @@ namespace Booldozer.Jmp
 								break;
 
 							case JMPType.FLOAT:
-								value.valueFloat = (float)reader.ReadDouble();
+								value.valueFloat = (float)reader.ReadSingle();
 								break;
 							
 							case JMPType.STRING:

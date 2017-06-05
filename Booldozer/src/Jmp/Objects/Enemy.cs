@@ -5,6 +5,7 @@ namespace Booldozer.Jmp.Objects
 	public class Enemy : RenderableMapObject
 	{
 		private string name;
+		private string createName;
 		private string pathName;
 		private string accessName;
 		private string codeName;
@@ -37,6 +38,15 @@ namespace Booldozer.Jmp.Objects
 
 		public Enemy()
 		{
+		}
+
+		public override void Load(jmp data, int entryIndex)
+		{
+			base.Load(data, entryIndex);
+
+			Position = new OpenTK.Vector3(posX, posY, posZ);
+			Rotation = new OpenTK.Quaternion(new OpenTK.Vector3(rotX, rotY, rotZ));
+			Scale = new OpenTK.Vector3(scaleX, scaleY, scaleZ);
 		}
 
 		public override void Save(string path)
