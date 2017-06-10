@@ -516,7 +516,7 @@ namespace Chadsoft.CTools.Image
                 palette[3] = new byte[] { 0, 0, 0, 0 };
             }
 
-            for (int i = 0; i < block.Length >> 4; i++)
+            for (int i = 0; i < (block.Length >> 4); i++)
             {
                 result[4 + i] = (byte)(LeastDistance(palette, block, i * 16 + 0) << 6 | LeastDistance(palette, block, i * 16 + 4) << 4 | LeastDistance(palette, block, i * 16 + 8) << 2 | LeastDistance(palette, block, i * 16 + 12));
             }
