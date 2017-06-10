@@ -32,13 +32,22 @@ namespace Booldozer.Jmp
 			public byte shift;
 			public JMPType type;
 
+			public void WriteField(EndianBinaryWriter stream)
+			{
+				stream.Write(hash);
+				stream.Write(bitmask);
+				stream.Write(start);
+				stream.Write(shift);
+				stream.Write((byte)type);
+			}
+
 			public jmpField(EndianBinaryReader stream)
 			{
-				this.hash = stream.ReadInt32();
-				this.bitmask = stream.ReadInt32();
-				this.start = stream.ReadInt16();
-				this.shift = stream.ReadByte();
-				this.type = (JMPType)stream.ReadByte();
+				hash = stream.ReadInt32();
+				bitmask = stream.ReadInt32();
+				start = stream.ReadInt16();
+				shift = stream.ReadByte();
+				type = (JMPType)stream.ReadByte();
 			}
 		}
 
@@ -69,9 +78,38 @@ namespace Booldozer.Jmp
 			return entries[entryNum+fieldNum].valueString;
 		}
 
-		public void addEntry(jmpValue[] entry)
+		public void WriteJmp(string path)
 		{
-			//TODO: plan out way of adding entries properly
+			using(FileStream fs = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write))
+			{
+				EndianBinaryWriter stream = new EndianBinaryWriter(fs, Endian.Big);
+				stream.Write(entryCount);
+				stream.Write(fieldCount);
+				stream.Write(entryOff);
+				stream.Write(entrySize);
+				foreach (var field in fields) field.WriteField(stream);
+				for (int i = 0; i < entryCount; i++)
+				{
+					for (int j = 0; j < fieldCount; j++)
+					{
+						switch (fields[j].type)
+						{
+							case JMPType.INTEGER:
+								stream.Write((entries[i*j].valueInt & fields[j].bitmask) << fields[j].shift);
+								break;
+							
+							case JMPType.STRING:
+								stream.WriteFixedString(entries[i*j].valueString, 32);
+								break;
+							
+							case JMPType.FLOAT:
+								stream.Write(entries[i*j].valueFloat);
+								break;
+						}
+					}
+				}
+				
+			}
 		}
 
 		public jmp(string path)
@@ -79,22 +117,22 @@ namespace Booldozer.Jmp
 			using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
 			{
 				EndianBinaryReader reader = new EndianBinaryReader(fs, Endian.Big);
-				this.entryCount = reader.ReadInt32();
-				this.fieldCount = reader.ReadInt32();
-				this.entryOff = reader.ReadInt32();
-				this.entrySize = reader.ReadInt32();
+				entryCount = reader.ReadInt32();
+				fieldCount = reader.ReadInt32();
+				entryOff = reader.ReadInt32();
+				entrySize = reader.ReadInt32();
 				
-				for(int i = 0; i < this.fieldCount; i++)
+				for(int i = 0; i < fieldCount; i++)
 				{
-					this.fields.Add(new jmpField(reader));
+					fields.Add(new jmpField(reader));
 				}
 				
-				for (int i = 0; i < this.entryCount; i++)
+				for (int i = 0; i < entryCount; i++)
 				{
-					for (int j = 0; j < this.fieldCount; j++)
+					for (int j = 0; j < fieldCount; j++)
 					{
-						var curFeild = this.fields[j]; 
-						reader.BaseStream.Seek((this.entryOff + (this.entrySize*i) + this.fields[j].start), SeekOrigin.Begin);
+						var curFeild = fields[j]; 
+						reader.BaseStream.Seek((entryOff + (entrySize*i) + fields[j].start), SeekOrigin.Begin);
 
 						jmpValue value = new jmpValue();
 						switch (curFeild.type)
@@ -112,7 +150,7 @@ namespace Booldozer.Jmp
 								break;
 
 						}
-						this.entries.Add(value);
+						entries.Add(value);
 					}
 				}
 
