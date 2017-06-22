@@ -1,7 +1,7 @@
 ﻿using System;
 using GameFormatReader.Common;
 
-namespace Booldozer.Models.GX
+namespace BooldozerCore.Models.GX
 {
 	public class GXVertex
 	{

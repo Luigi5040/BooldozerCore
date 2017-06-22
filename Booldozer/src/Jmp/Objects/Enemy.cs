@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Booldozer.Jmp.Objects
+namespace BooldozerCore.Jmp.Objects
 {
 	public class Enemy : RenderableMapObject
 	{
@@ -47,6 +47,8 @@ namespace Booldozer.Jmp.Objects
 			Position = new OpenTK.Vector3(posX, posY, posZ);
 			Rotation = new OpenTK.Quaternion(new OpenTK.Vector3(rotX, rotY, rotZ));
 			Scale = new OpenTK.Vector3(scaleX, scaleY, scaleZ);
+
+            HasRoomNumber = true;
 		}
 
 		public override void Save(string path)

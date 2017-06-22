@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics;
-using Booldozer.Models.GX;
+using BooldozerCore.Models.GX;
 using GameFormatReader.Common;
 
-namespace Booldozer.Models
+namespace BooldozerCore.Models
 {
 	public abstract class Mesh
 	{

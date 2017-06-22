@@ -1,0 +1,58 @@
+<MapSelect>
+	<MapSelectEntry>
+		<InternalName>map0</InternalName>
+		<EnglishName>Test Map</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map1</InternalName>
+		<EnglishName>E. Gadd's Lab</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map2</InternalName>
+		<EnglishName>Mansion</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map3</InternalName>
+		<EnglishName>Training Room</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map4</InternalName>
+		<EnglishName>Portrificationizer Room (Used)</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map5</InternalName>
+		<EnglishName>Short Early Gallery</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map6</InternalName>
+		<EnglishName>Final Gallery</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map7</InternalName>
+		<EnglishName>Long Early Gallery (Final textures)</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map8</InternalName>
+		<EnglishName>Long Early Gallery (Early textures)</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map9</InternalName>
+		<EnglishName>King Boo's Roof</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map10</InternalName>
+		<EnglishName>Chauncey's Crib</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map11</InternalName>
+		<EnglishName>Boolossus's Balcony</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map12</InternalName>
+		<EnglishName>Portrificationizer Room (Unused)</EnglishName>
+	</MapSelectEntry>
+	<MapSelectEntry>
+		<InternalName>map13</InternalName>
+		<EnglishName>Bogmire's Arena</EnglishName>
+	</MapSelectEntry>
+</MapSelect>

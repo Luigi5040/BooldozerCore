@@ -2,9 +2,9 @@
 using System.IO;
 using GameFormatReader.Common;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		private void GenerateAllCells()
 		{

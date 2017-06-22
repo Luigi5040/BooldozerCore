@@ -3,9 +3,9 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		public int colDisplayList { get; set; }
 

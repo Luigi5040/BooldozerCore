@@ -1,8 +1,8 @@
 ﻿using System;
 using GameFormatReader.Common;
-using Booldozer.Materials;
+using BooldozerCore.Materials;
 
-namespace Booldozer.Models.Bin
+namespace BooldozerCore.Models.Bin
 {
 	public class Shader
 	{

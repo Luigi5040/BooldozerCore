@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Globalization;
 
-namespace Booldozer.Materials
+namespace BooldozerCore.Materials
 {
     public struct Color
     {

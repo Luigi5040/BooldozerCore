@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using OpenTK;
 using GameFormatReader.Common;
 
-namespace Booldozer.Util
+namespace BooldozerCore.Util
 {
 	public class BoundingBox
 	{

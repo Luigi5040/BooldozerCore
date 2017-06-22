@@ -2,7 +2,7 @@
 using GameFormatReader.Common;
 using System.Collections.Generic;
 
-namespace Booldozer.Models.Bin
+namespace BooldozerCore.Models.Bin
 {
 	public class GXVertex
 	{

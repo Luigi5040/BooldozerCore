@@ -6,11 +6,11 @@ using OpenTK;
 using Assimp;
 using GameFormatReader.Common;
 //using Newtonsoft.Json;
-using Booldozer.Util;
+using BooldozerCore.Util;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		public string OriginalFilename { get; private set; }
 		public static Vector3 StaticScale;
@@ -19,7 +19,7 @@ namespace Booldozer.Collision
 		public List<Vector3> NormalizedVectors { get; private set; }
 		public List<Triangle> Triangles { get; private set; }
 
-		public Collision()
+		public CollisionMesh()
 		{
 			StaticScale = new Vector3(256.0f, 512.0f, 256.0f);
 			Vertices = new List<Vector3>();
@@ -27,7 +27,7 @@ namespace Booldozer.Collision
 			Triangles = new List<Triangle>();
 		}
 
-		public Collision(string fileName)
+		public CollisionMesh(string fileName)
 		{
 			if (!File.Exists(fileName))
 				throw new FormatException($"File \"{ fileName }\" does not exist.");

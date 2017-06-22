@@ -4,7 +4,7 @@ using Assimp;
 using OpenTK;
 using GameFormatReader.Common;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
 	public static class Util
 	{

@@ -1,5 +1,5 @@
 ﻿using System;
-namespace Booldozer
+namespace BooldozerCore
 {
 	public enum GXAttribute
 	{

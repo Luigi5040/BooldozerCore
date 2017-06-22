@@ -4,10 +4,10 @@ using System.Text;
 using System.IO;
 using OpenTK;
 using GameFormatReader.Common;
-using Booldozer.Materials;
-using Booldozer.Models.GX;
+using BooldozerCore.Materials;
+using BooldozerCore.Models.GX;
 
-namespace Booldozer.Models.Mdl
+namespace BooldozerCore.Models.Mdl
 {
 	public interface ISectionItem
 	{
@@ -71,7 +71,7 @@ namespace Booldozer.Models.Mdl
 		public void WriteObj(string f)
 		{
 			//string dirPath = Path.GetDirectoryName(f);
-			string fileName = Path.GetFileNameWithoutExtension(f);
+			string fileName = $"{ AppContext.BaseDirectory }\\{ Path.GetFileNameWithoutExtension(f) }";
 
 			StringWriter objWriter = new StringWriter();
 			StringWriter mtlWriter = new StringWriter();
@@ -113,7 +113,7 @@ namespace Booldozer.Models.Mdl
 					TexObj texObj = texobjs[mat.stages[0].texobj_index];
 					mtlWriter.WriteLine($"map_Kd { index }.png");
 					BinaryTextureImage tex = textures[texObj.textureIndex];
-					tex.SaveImageToDisk($"{ index }.png", tex.GetData(), tex.Width, tex.Height);
+					tex.SaveImageToDisk($"{ AppContext.BaseDirectory }\\{ index }.png", tex.GetData(), tex.Width, tex.Height);
 				}
 
 				objWriter.WriteLine($"o { index }");

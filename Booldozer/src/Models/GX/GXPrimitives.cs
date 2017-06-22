@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Booldozer.Models.GX
+namespace BooldozerCore.Models.GX
 {
 	public enum GXPrimitiveType
 	{

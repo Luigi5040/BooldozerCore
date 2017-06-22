@@ -5,9 +5,9 @@ using System.IO;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using GameFormatReader.Common;
-using Booldozer.Materials;
+using BooldozerCore.Materials;
 using System.Drawing;
-using Booldozer.Models.GX;
+using BooldozerCore.Models.GX;
 //using Assimp;
 
 /*
@@ -18,7 +18,7 @@ using Booldozer.Models.GX;
 
  */
 
-namespace Booldozer.Models.Bin
+namespace BooldozerCore.Models.Bin
 {
 	public class BinModel : Mesh
 	{

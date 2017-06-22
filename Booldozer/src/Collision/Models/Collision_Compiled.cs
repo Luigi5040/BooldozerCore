@@ -4,11 +4,11 @@ using GameFormatReader.Common;
 using OpenTK;
 using System.Text;
 using System.Collections.Generic;
-using Booldozer.Util;
+using BooldozerCore.Util;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		#region Input
 

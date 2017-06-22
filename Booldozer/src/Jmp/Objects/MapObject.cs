@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Reflection;
-using Booldozer.Models;
+using BooldozerCore.Models;
 
-namespace Booldozer.Jmp.Objects
+namespace BooldozerCore.Jmp.Objects
 {
 	public abstract class MapObject
 	{
+        public bool HasRoomNumber;
+
 		public virtual void Load(jmp data, int entryIndex)
 		{
 			FieldInfo[] fields = this.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance);

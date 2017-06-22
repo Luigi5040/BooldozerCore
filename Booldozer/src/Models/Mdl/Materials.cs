@@ -3,7 +3,7 @@ using GameFormatReader.Common;
 using System.Collections.Generic;
 
 
-namespace Booldozer.Models.Mdl
+namespace BooldozerCore.Models.Mdl
 {
 
     public class TexObj : ISectionItem

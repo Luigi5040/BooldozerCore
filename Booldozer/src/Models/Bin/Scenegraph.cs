@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using GameFormatReader.Common;
 using OpenTK;
-using Booldozer.Models.GX;
+using BooldozerCore.Models.GX;
 
-namespace Booldozer.Models.Bin
+namespace BooldozerCore.Models.Bin
 {
 	public class GraphObject
 	{

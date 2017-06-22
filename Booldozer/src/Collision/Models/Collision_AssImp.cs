@@ -4,9 +4,9 @@ using System.IO;
 using OpenTK;
 using GameFormatReader.Common;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		#region Input
 

@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using GameFormatReader.Common;
-using Booldozer.Models.Mdl;
-using Booldozer.Materials;
+using BooldozerCore.Models.Mdl;
+using BooldozerCore.Materials;
 
-namespace Booldozer.Models.GX
+namespace BooldozerCore.Models.GX
 {
 	public class GXBatch
 	{
@@ -144,9 +144,7 @@ namespace Booldozer.Models.GX
 					byte mtxPos2 = (byte)(reader.ReadByte() / 3);
 					byte mtxPos3 = (byte)(reader.ReadByte() / 3);
 
-					if (curPak.matIndicies[mtxPos1] == 0xFFFF)
-					{
-					}
+
 
 					if (mtxPos1 != mtxPos2)
 					{

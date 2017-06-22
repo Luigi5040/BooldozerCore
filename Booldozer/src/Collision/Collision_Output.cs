@@ -6,9 +6,9 @@ using GameFormatReader.Common;
 //using Newtonsoft.Json;
 using Assimp;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
-	public partial class Collision
+	public partial class CollisionMesh
 	{
 		public enum FileType
 		{

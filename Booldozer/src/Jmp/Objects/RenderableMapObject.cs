@@ -1,14 +1,15 @@
 ﻿using System;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
-using Booldozer.Models;
+using BooldozerCore.Models;
 
-namespace Booldozer.Jmp.Objects
+namespace BooldozerCore.Jmp.Objects
 {
 	public abstract class RenderableMapObject : MapObject
 	{
 		public Mesh ObjectModel { get; private set; }
 
+        public bool IsVisible;
 		public Vector3 Position;
 		public Quaternion Rotation;
 		public Vector3 Scale;
@@ -28,5 +29,10 @@ namespace Booldozer.Jmp.Objects
 
 			ObjectModel.Render();
 		}
+        
+        public void SetVisible(bool visible)
+        {
+            IsVisible = visible;
+        }
 	}
 }

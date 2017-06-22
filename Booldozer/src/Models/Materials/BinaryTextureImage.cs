@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using Chadsoft.CTools.Image;
 
-namespace Booldozer.Materials
+namespace BooldozerCore.Materials
 {
     /// <summary>
     /// The BinaryTextureImage (or BTI) format is used by Wind Waker (and several other Nintendo
@@ -944,13 +944,13 @@ namespace Booldozer.Materials
             switch (format)
             {
                 case TextureFormats.I4:
-                    return ImageDataFormat.I4.ConvertTo(imageData, width, height, null);
+                    return ImageDataFormat.I4.ConvertTo(imageData, width, height);
                 case TextureFormats.RGB5A3:
-                    return ImageDataFormat.RGB5A3.ConvertTo(imageData, width, height, null);
+                    return ImageDataFormat.RGB5A3.ConvertTo(imageData, width, height);
                 case TextureFormats.RGBA32:
-                    return ImageDataFormat.Rgba32.ConvertTo(imageData, width, height, null);
+                    return ImageDataFormat.Rgba32.ConvertTo(imageData, width, height);
                 case TextureFormats.CMPR:
-                    return ImageDataFormat.Cmpr.ConvertTo(imageData, width, height, null);
+                    return ImageDataFormat.Cmpr.ConvertTo(imageData, width, height);
                 default:
                     return new byte[0];
             }

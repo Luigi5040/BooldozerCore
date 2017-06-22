@@ -5,7 +5,7 @@ using GameFormatReader.Common;
 using Assimp;
 //using Newtonsoft.Json;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
 	public class Triangle
 	{

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using GameFormatReader.Common;
 using OpenTK;
-using Booldozer.Util;
+using BooldozerCore.Util;
 
-namespace Booldozer.Collision
+namespace BooldozerCore.Collision
 {
 	public class GridCell
 	{
