@@ -1,0 +1,21 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BooldozerCore", "BooldozerCore\BooldozerCore.csproj", "{50CD2A4D-D6C7-4CCF-A56F-F01962DADF43}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{50CD2A4D-D6C7-4CCF-A56F-F01962DADF43}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{50CD2A4D-D6C7-4CCF-A56F-F01962DADF43}.Debug|x86.Build.0 = Debug|Any CPU
+		{50CD2A4D-D6C7-4CCF-A56F-F01962DADF43}.Release|x86.ActiveCfg = Release|Any CPU
+		{50CD2A4D-D6C7-4CCF-A56F-F01962DADF43}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
