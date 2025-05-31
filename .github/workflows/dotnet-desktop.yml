@@ -90,7 +90,7 @@ jobs:
     - name: Decode the pfx
       run: |
         $pfx_cert_byte = [System.Convert]::FromBase64String("${{ secrets.Base64_Encoded_Pfx }}")
-        $certificatePath = Join-Path -Path $env:BooldozerCore -ChildPath GitHubActionsWorkflow.pfx
+        $certificatePath = Join-Path -Path $env:Luigi5040\BooldozerCore -ChildPath GitHubActionsWorkflow.pfx
         [IO.File]::WriteAllBytes("$certificatePath", $pfx_cert_byte)
 
     # Create the app package by building and packaging the Windows Application Packaging project
@@ -104,7 +104,7 @@ jobs:
 
     # Remove the pfx
     - name: Remove the pfx
-      run: Remove-Item -path $env:BooldozerCore\GitHubActionsWorkflow.pfx
+      run: Remove-Item -path $env:Luigi5040\BooldozerCore\GitHubActionsWorkflow.pfx
 
     # Upload the MSIX package: https://github.com/marketplace/actions/upload-a-build-artifact
     - name: Upload build artifacts
